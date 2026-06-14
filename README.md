@@ -55,3 +55,15 @@ Authentication > Users > Add User
 ```
 
 Crie e-mail e senha provisória. No primeiro login, o usuário será obrigado a alterar a senha.
+
+
+## V2.1
+
+Inclui:
+- Validações contra valores negativos.
+- Bloqueio para iniciar feira com quantidade maior que o estoque.
+- Bloqueio para encerrar feira quando voltou + perdeu for maior que levou.
+- Edição de produtos.
+- Edição de categorias.
+- Edição de feiras/locais.
+- Resumo antes de confirmar o encerramento da feira.

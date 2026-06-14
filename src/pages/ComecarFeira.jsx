@@ -28,6 +28,27 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
     event.preventDefault()
     setMessage('')
 
+    const selected = items.filter((item) => Number(item.quantity_taken || 0) > 0)
+
+    if (!selected.length) {
+      setMessage('Informe pelo menos um produto levado.')
+      return
+    }
+
+    for (const item of items) {
+      const taken = Number(item.quantity_taken || 0)
+
+      if (taken < 0) {
+        setMessage(`A quantidade de ${item.name} não pode ser negativa.`)
+        return
+      }
+
+      if (taken > Number(item.stock || 0)) {
+        setMessage(`Você não tem estoque suficiente de ${item.name}.`)
+        return
+      }
+    }
+
     try {
       await startFair({ userId: user.id, fairPlace: selectedFairPlace, items })
       await reload()
@@ -55,7 +76,15 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
                 <span>{product.categories?.name || 'Sem categoria'}</span>
                 <small>Disponível: {qty(product.stock)} {product.unit}</small>
               </div>
-              <input type="number" step="0.01" value={product.quantity_taken} onChange={(e) => updateQuantity(product.id, e.target.value)} placeholder="Levou" />
+              <input
+                min="0"
+                max={product.stock}
+                type="number"
+                step="0.01"
+                value={product.quantity_taken}
+                onChange={(e) => updateQuantity(product.id, e.target.value)}
+                placeholder="Levou"
+              />
             </article>
           ))}
         </section>

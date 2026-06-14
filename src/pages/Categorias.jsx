@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { createCategory, deleteCategory } from '../services/api'
+import { createCategory, deleteCategory, updateCategory } from '../services/api'
 
 export default function Categorias({ user, categories, reload }) {
   const [name, setName] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editingName, setEditingName] = useState('')
   const [message, setMessage] = useState('')
 
   async function submit(event) {
@@ -18,8 +20,22 @@ export default function Categorias({ user, categories, reload }) {
     }
   }
 
+  async function saveEdit(event) {
+    event.preventDefault()
+    setMessage('')
+
+    try {
+      await updateCategory({ id: editingId, name: editingName })
+      setEditingId(null)
+      setEditingName('')
+      await reload()
+    } catch (error) {
+      setMessage(error.message)
+    }
+  }
+
   async function remove(id) {
-    if (!confirm('Excluir categoria?')) return
+    if (!confirm('Excluir categoria? Os produtos continuarão cadastrados, mas ficarão sem categoria.')) return
     await deleteCategory(id)
     await reload()
   }
@@ -38,14 +54,33 @@ export default function Categorias({ user, categories, reload }) {
 
       <section className="list">
         {categories.map((category) => (
-          <article className="item-card" key={category.id}>
-            <div>
-              <strong>{category.name}</strong>
-              <span>Categoria cadastrada</span>
-            </div>
-            <button className="mini-btn danger-text" onClick={() => remove(category.id)}>Excluir</button>
+          <article className="item-card editable-card" key={category.id}>
+            {editingId === category.id ? (
+              <form className="inline-edit" onSubmit={saveEdit}>
+                <input value={editingName} onChange={(e) => setEditingName(e.target.value)} required />
+                <div className="inline-actions">
+                  <button className="mini-filled" type="submit">Salvar</button>
+                  <button className="mini-btn" type="button" onClick={() => setEditingId(null)}>Cancelar</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <div>
+                  <strong>{category.name}</strong>
+                  <span>Categoria cadastrada</span>
+                </div>
+                <div className="card-actions">
+                  <button className="mini-btn" onClick={() => {
+                    setEditingId(category.id)
+                    setEditingName(category.name)
+                  }}>Editar</button>
+                  <button className="mini-btn danger-text" onClick={() => remove(category.id)}>Excluir</button>
+                </div>
+              </>
+            )}
           </article>
         ))}
+
         {!categories.length && <p className="empty">Nenhuma categoria criada.</p>}
       </section>
     </main>

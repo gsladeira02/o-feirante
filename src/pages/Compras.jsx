@@ -13,8 +13,19 @@ export default function Compras({ user, products, reload }) {
     setMessage('')
 
     const product = products.find((item) => item.id === productId)
+
     if (!product) {
       setMessage('Selecione um produto.')
+      return
+    }
+
+    if (Number(quantity || 0) <= 0) {
+      setMessage('A quantidade comprada precisa ser maior que zero.')
+      return
+    }
+
+    if (Number(totalValue || 0) < 0) {
+      setMessage('O valor total pago não pode ser negativo.')
       return
     }
 
@@ -43,10 +54,10 @@ export default function Compras({ user, products, reload }) {
         </select>
 
         <label>Quantidade comprada</label>
-        <input type="number" step="0.01" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+        <input min="0" type="number" step="0.01" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
 
         <label>Valor total pago</label>
-        <input type="number" step="0.01" value={totalValue} onChange={(e) => setTotalValue(e.target.value)} required />
+        <input min="0" type="number" step="0.01" value={totalValue} onChange={(e) => setTotalValue(e.target.value)} required />
 
         <label>Fornecedor</label>
         <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Opcional" />

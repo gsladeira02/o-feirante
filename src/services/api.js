@@ -278,3 +278,46 @@ export async function getClosedFairs(userId) {
   if (error) throw error
   return data || []
 }
+
+
+export async function updateCategory({ id, name }) {
+  const cleanName = name.trim()
+  if (!cleanName) throw new Error('Informe o nome da categoria.')
+
+  const { error } = await supabase
+    .from('categories')
+    .update({ name: cleanName })
+    .eq('id', id)
+
+  if (error?.code === '23505') throw new Error('Essa categoria já existe.')
+  if (error) throw error
+}
+
+export async function updateFairPlace({ id, name, address, weekday }) {
+  const cleanName = name.trim()
+  if (!cleanName) throw new Error('Informe o nome da feira.')
+
+  const { error } = await supabase
+    .from('fair_places')
+    .update({ name: cleanName, address, weekday })
+    .eq('id', id)
+
+  if (error?.code === '23505') throw new Error('Essa feira já existe.')
+  if (error) throw error
+}
+
+export async function updateProduct(product) {
+  const { error } = await supabase
+    .from('products')
+    .update({
+      category_id: product.category_id || null,
+      name: product.name,
+      unit: product.unit,
+      stock: Number(product.stock || 0),
+      average_cost: Number(product.average_cost || 0),
+      sale_price: Number(product.sale_price || 0),
+    })
+    .eq('id', product.id)
+
+  if (error) throw error
+}
