@@ -1,10 +1,15 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './styles.css'
+import { LogOut } from 'lucide-react'
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+export default function Header({ onLogout }) {
+  return (
+    <header className="topbar">
+      <div>
+        <p className="eyebrow">O Feirante</p>
+        <h1>Controle sua banca</h1>
+      </div>
+      <button className="icon-btn" onClick={onLogout} title="Sair">
+        <LogOut size={20} />
+      </button>
+    </header>
+  )
+}

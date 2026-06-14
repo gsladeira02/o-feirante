@@ -1,72 +1,58 @@
 import { useState } from 'react'
-import { changeFirstPassword } from '../services/api'
+import { registerPurchase } from '../services/api'
 
-export default function ChangePassword({ onDone }) {
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+export default function Compras({ user, products, reload }) {
+  const [productId, setProductId] = useState('')
+  const [quantity, setQuantity] = useState('')
+  const [totalValue, setTotalValue] = useState('')
+  const [supplier, setSupplier] = useState('')
   const [message, setMessage] = useState('')
 
   async function submit(event) {
     event.preventDefault()
     setMessage('')
 
-    if (password.length < 6) {
-      setMessage('A nova senha precisa ter pelo menos 6 caracteres.')
+    const product = products.find((item) => item.id === productId)
+    if (!product) {
+      setMessage('Selecione um produto.')
       return
     }
-
-    if (password !== confirmPassword) {
-      setMessage('As senhas não conferem.')
-      return
-    }
-
-    setLoading(true)
 
     try {
-      await changeFirstPassword(password)
-      await onDone()
+      await registerPurchase({ userId: user.id, product, quantity, totalValue, supplier })
+      setProductId('')
+      setQuantity('')
+      setTotalValue('')
+      setSupplier('')
+      setMessage('Compra registrada.')
+      await reload()
     } catch (error) {
       setMessage(error.message)
-    } finally {
-      setLoading(false)
     }
   }
 
   return (
-    <main className="login-screen">
-      <section className="brand-card">
-        <div className="logo-mark">OF</div>
-        <h1>Primeiro acesso</h1>
-        <p>Por segurança, defina sua nova senha antes de usar o aplicativo.</p>
-      </section>
+    <main className="page">
+      <h2>Comprar mercadoria</h2>
 
       <form className="form-card" onSubmit={submit}>
-        <h2>Alterar senha</h2>
+        <label>Produto</label>
+        <select value={productId} onChange={(e) => setProductId(e.target.value)} required>
+          <option value="">Selecione</option>
+          {products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}
+        </select>
 
-        <label>Nova senha</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          minLength="6"
-          required
-        />
+        <label>Quantidade comprada</label>
+        <input type="number" step="0.01" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
 
-        <label>Confirmar nova senha</label>
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          minLength="6"
-          required
-        />
+        <label>Valor total pago</label>
+        <input type="number" step="0.01" value={totalValue} onChange={(e) => setTotalValue(e.target.value)} required />
+
+        <label>Fornecedor</label>
+        <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Opcional" />
 
         {message && <p className="message">{message}</p>}
-
-        <button className="primary-btn" disabled={loading}>
-          {loading ? 'Salvando...' : 'Salvar senha e entrar'}
-        </button>
+        <button className="primary-btn">Registrar compra</button>
       </form>
     </main>
   )

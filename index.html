@@ -1,18 +1,60 @@
-import { LogOut } from 'lucide-react'
+import { dateBR, money, qty } from '../utils/format'
 
-export default function Header({ user, onLogout }) {
+export default function Historico({ fairs }) {
+  const groups = fairs.reduce((acc, fair) => {
+    const key = fair.fair_places?.name || fair.name || 'Sem local'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(fair)
+    return acc
+  }, {})
+
   return (
-    <header className="topbar">
-      <div>
-        <p className="eyebrow">O Feirante</p>
-        <h1>Controle sua banca</h1>
-      </div>
+    <main className="page">
+      <h2>Histórico por feira</h2>
 
-      {user && (
-        <button className="icon-btn" onClick={onLogout} title="Sair">
-          <LogOut size={20} />
-        </button>
-      )}
-    </header>
+      {Object.entries(groups).map(([placeName, placeFairs]) => {
+        const revenue = placeFairs.reduce((sum, fair) => sum + Number(fair.revenue_total || 0), 0)
+        const profit = placeFairs.reduce((sum, fair) => sum + Number(fair.profit_total || 0), 0)
+
+        return (
+          <section className="history-group" key={placeName}>
+            <div className="group-header">
+              <div>
+                <h3>{placeName}</h3>
+                <span>{placeFairs.length} feira(s) encerrada(s)</span>
+              </div>
+              <strong>{money(revenue)}</strong>
+            </div>
+            <small>Lucro estimado: {money(profit)}</small>
+
+            <div className="list nested">
+              {placeFairs.map((fair) => (
+                <article className="history-card" key={fair.id}>
+                  <div>
+                    <strong>{dateBR(fair.closed_at)}</strong>
+                    <span>{fair.fair_places?.weekday || ''}</span>
+                  </div>
+
+                  <div className="result-grid">
+                    <div><small>Faturamento</small><strong>{money(fair.revenue_total)}</strong></div>
+                    <div><small>Lucro</small><strong>{money(fair.profit_total)}</strong></div>
+                    <div><small>Perdas</small><strong>{money(fair.loss_total)}</strong></div>
+                  </div>
+
+                  <details>
+                    <summary>Ver produtos</summary>
+                    {(fair.fair_items || []).map((item) => (
+                      <p key={item.id}>{item.product_name}: vendeu {qty(item.quantity_sold)} {item.unit}</p>
+                    ))}
+                  </details>
+                </article>
+              ))}
+            </div>
+          </section>
+        )
+      })}
+
+      {!fairs.length && <p className="empty">Nenhuma feira encerrada ainda.</p>}
+    </main>
   )
 }

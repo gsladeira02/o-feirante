@@ -1,61 +1,54 @@
 import { useState } from 'react'
-import { registerPurchase } from '../services/api'
+import { supabase, hasSupabaseConfig } from '../supabase'
 
-export default function Compras({ user, products, reload }) {
-  const [productId, setProductId] = useState('')
-  const [quantity, setQuantity] = useState('')
-  const [totalValue, setTotalValue] = useState('')
-  const [supplier, setSupplier] = useState('')
+export default function Login({ onLogin }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function submit(event) {
     event.preventDefault()
     setMessage('')
 
-    const product = products.find((item) => item.id === productId)
-    if (!product) {
-      setMessage('Selecione um produto.')
+    if (!hasSupabaseConfig) {
+      setMessage('Configure as variáveis do Supabase na Vercel.')
       return
     }
 
+    setLoading(true)
     try {
-      await registerPurchase({ userId: user.id, product, quantity, totalValue, supplier })
-      setProductId('')
-      setQuantity('')
-      setTotalValue('')
-      setSupplier('')
-      setMessage('Compra registrada e estoque atualizado.')
-      await reload()
-    } catch (error) {
-      setMessage(error.message)
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      onLogin(data.session)
+    } catch {
+      setMessage('E-mail ou senha inválidos.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <main className="page">
-      <h2>Comprar mercadoria</h2>
+    <main className="login-screen">
+      <section className="brand-card">
+        <div className="logo-mark">OF</div>
+        <h1>O Feirante</h1>
+        <p>Acesso exclusivo para assinantes.</p>
+      </section>
 
       <form className="form-card" onSubmit={submit}>
-        <label>Produto</label>
-        <select value={productId} onChange={(e) => setProductId(e.target.value)} required>
-          <option value="">Selecione</option>
-          {products.map((product) => (
-            <option value={product.id} key={product.id}>{product.name}</option>
-          ))}
-        </select>
+        <h2>Entrar</h2>
 
-        <label>Quantidade comprada</label>
-        <input type="number" step="0.01" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+        <label>E-mail</label>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
-        <label>Valor total pago</label>
-        <input type="number" step="0.01" value={totalValue} onChange={(e) => setTotalValue(e.target.value)} required />
-
-        <label>Fornecedor</label>
-        <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Opcional" />
+        <label>Senha</label>
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
 
         {message && <p className="message">{message}</p>}
 
-        <button className="primary-btn">Registrar compra</button>
+        <button className="primary-btn" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
+        <p className="access-note">Sua conta é criada pelo administrador após a assinatura.</p>
       </form>
     </main>
   )

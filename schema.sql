@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { createCategory, deleteCategory } from '../services/api'
+import { createFairPlace, deleteFairPlace } from '../services/api'
 
-export default function Categorias({ user, categories, reload }) {
-  const [name, setName] = useState('')
+export default function Feiras({ user, fairPlaces, reload, setPage, setSelectedFairPlace }) {
+  const [form, setForm] = useState({ name: '', address: '', weekday: '' })
   const [message, setMessage] = useState('')
 
   async function submit(event) {
@@ -10,8 +10,14 @@ export default function Categorias({ user, categories, reload }) {
     setMessage('')
 
     try {
-      await createCategory({ userId: user.id, name })
-      setName('')
+      await createFairPlace({
+        userId: user.id,
+        name: form.name,
+        address: form.address,
+        weekday: form.weekday,
+      })
+
+      setForm({ name: '', address: '', weekday: '' })
       await reload()
     } catch (error) {
       setMessage(error.message)
@@ -19,39 +25,58 @@ export default function Categorias({ user, categories, reload }) {
   }
 
   async function remove(id) {
-    if (!confirm('Excluir esta categoria? Os produtos continuarão cadastrados, mas ficarão sem categoria.')) return
-    await deleteCategory(id)
+    if (!confirm('Excluir feira cadastrada?')) return
+    await deleteFairPlace(id)
     await reload()
+  }
+
+  function start(place) {
+    setSelectedFairPlace(place)
+    setPage('comecar')
   }
 
   return (
     <main className="page">
-      <h2>Categorias</h2>
-      <p className="muted">Organize os produtos por grupos, como frutas, verduras e legumes.</p>
+      <h2>Minhas feiras</h2>
+      <p className="muted">Cadastre os locais. Depois toque em uma feira para iniciar.</p>
 
       <form className="form-card compact" onSubmit={submit}>
-        <h3>Nova categoria</h3>
+        <h3>Cadastrar feira</h3>
 
-        <label>Nome</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Frutas" required />
+        <label>Nome da feira</label>
+        <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Feira da Glória" required />
+
+        <label>Bairro ou endereço</label>
+        <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Opcional" />
+
+        <label>Dia da semana</label>
+        <select value={form.weekday} onChange={(e) => setForm({ ...form, weekday: e.target.value })}>
+          <option value="">Não informar</option>
+          <option value="Segunda">Segunda</option>
+          <option value="Terça">Terça</option>
+          <option value="Quarta">Quarta</option>
+          <option value="Quinta">Quinta</option>
+          <option value="Sexta">Sexta</option>
+          <option value="Sábado">Sábado</option>
+          <option value="Domingo">Domingo</option>
+        </select>
 
         {message && <p className="message">{message}</p>}
-
-        <button className="primary-btn">Salvar categoria</button>
+        <button className="primary-btn">Salvar feira</button>
       </form>
 
       <section className="list">
-        {categories.map((category) => (
-          <article className="item-card" key={category.id}>
-            <div>
-              <strong>{category.name}</strong>
-              <span>Categoria cadastrada</span>
-            </div>
-            <button className="mini-btn danger-text" onClick={() => remove(category.id)}>Excluir</button>
+        {fairPlaces.map((place) => (
+          <article className="item-card fair-place-card" key={place.id}>
+            <button className="fair-start" onClick={() => start(place)}>
+              <strong>{place.name}</strong>
+              <span>{place.weekday || 'Dia não informado'} {place.address ? `· ${place.address}` : ''}</span>
+              <small>Toque para iniciar esta feira</small>
+            </button>
+            <button className="mini-btn danger-text" onClick={() => remove(place.id)}>Excluir</button>
           </article>
         ))}
-
-        {!categories.length && <p className="empty">Nenhuma categoria criada ainda.</p>}
+        {!fairPlaces.length && <p className="empty">Nenhuma feira cadastrada.</p>}
       </section>
     </main>
   )
