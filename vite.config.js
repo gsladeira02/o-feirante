@@ -1,6 +1,12 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+export function money(value) {
+  return Number(value || 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
 
-export default defineConfig({
-  plugins: [react()],
-})
+export function number(value) {
+  return Number(value || 0).toLocaleString('pt-BR', {
+    maximumFractionDigits: 2,
+  })
+}

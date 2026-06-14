@@ -1,44 +1,240 @@
-# O Feirante - V1
+import { supabase } from '../supabase'
 
-Aplicativo mobile-first para feirantes controlarem estoque, compras, início de feira, encerramento de feira e resultado automático.
+export async function getSession() {
+  if (!supabase) return null
+  const { data } = await supabase.auth.getSession()
+  return data.session
+}
 
-## Como rodar
+export async function signOut() {
+  return supabase.auth.signOut()
+}
 
-```bash
-npm install
-npm run dev
-```
+export async function getProducts(userId) {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('user_id', userId)
+    .order('name')
 
-## Configurar Supabase
+  if (error) throw error
+  return data || []
+}
 
-1. Crie um projeto no Supabase.
-2. Abra o SQL Editor.
-3. Rode o arquivo `supabase/schema.sql`.
-4. Copie `.env.example` para `.env`.
-5. Preencha:
+export async function createProduct(product) {
+  const { error } = await supabase.from('products').insert(product)
+  if (error) throw error
+}
 
-```env
-VITE_SUPABASE_URL=sua_url
-VITE_SUPABASE_ANON_KEY=sua_chave_anon_public
-```
+export async function deleteProduct(id) {
+  const { error } = await supabase.from('products').delete().eq('id', id)
+  if (error) throw error
+}
 
-## Publicar na Vercel
+export async function registerPurchase({ userId, product, quantity, totalValue, supplier }) {
+  const oldStock = Number(product.stock || 0)
+  const oldCost = Number(product.average_cost || 0)
+  const qty = Number(quantity || 0)
+  const total = Number(totalValue || 0)
+  const newStock = oldStock + qty
+  const newAverageCost = newStock > 0 ? ((oldStock * oldCost) + total) / newStock : 0
 
-1. Suba este projeto para o GitHub.
-2. Importe o repositório na Vercel.
-3. Adicione as variáveis de ambiente:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-4. Clique em Deploy.
+  const { error: purchaseError } = await supabase.from('purchases').insert({
+    user_id: userId,
+    product_id: product.id,
+    quantity: qty,
+    total_value: total,
+    supplier,
+  })
+  if (purchaseError) throw purchaseError
 
-## Funcionalidades da V1
+  const { error: productError } = await supabase
+    .from('products')
+    .update({
+      stock: newStock,
+      average_cost: newAverageCost,
+    })
+    .eq('id', product.id)
 
-- Login e cadastro por e-mail/senha.
-- Cadastro de produtos.
-- Entrada de compras no estoque.
-- Começar feira informando produtos levados.
-- Encerrar feira informando retorno e perdas.
-- Cálculo automático de vendido, faturamento, custo, lucro e perdas.
-- Histórico de feiras.
-- Layout mobile-first.
-- PWA básico.
+  if (productError) throw productError
+}
+
+export async function getActiveFair(userId) {
+  const { data, error } = await supabase
+    .from('fairs')
+    .select('*, fair_items(*)')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+export async function startFair({ userId, name, items }) {
+  const selected = items.filter((item) => Number(item.quantity_taken || 0) > 0)
+  if (!selected.length) throw new Error('Informe pelo menos um produto levado.')
+
+  const { data: fair, error: fairError } = await supabase
+    .from('fairs')
+    .insert({ user_id: userId, name, status: 'active' })
+    .select()
+    .single()
+
+  if (fairError) throw fairError
+
+  const fairItems = selected.map((item) => ({
+    fair_id: fair.id,
+    product_id: item.id,
+    product_name: item.name,
+    unit: item.unit,
+    cost_at_time: Number(item.average_cost || 0),
+    sale_price_at_time: Number(item.sale_price || 0),
+    quantity_taken: Number(item.quantity_taken || 0),
+  }))
+
+  const { error: itemsError } = await supabase.from('fair_items').insert(fairItems)
+  if (itemsError) throw itemsError
+
+  for (const item of selected) {
+    const newStock = Number(item.stock || 0) - Number(item.quantity_taken || 0)
+    const { error } = await supabase
+      .from('products')
+      .update({ stock: newStock })
+      .eq('id', item.id)
+
+    if (error) throw error
+  }
+
+  return fair
+}
+
+export async function closeFair({ fair, closingItems }) {
+  let revenueTotal = 0
+  let costTotal = 0
+  let profitTotal = 0
+  let lossTotal = 0
+
+  for (const item of closingItems) {
+    const taken = Number(item.quantity_taken || 0)
+    const returned = Number(item.quantity_returned || 0)
+    const lost = Number(item.quantity_lost || 0)
+    const sold = Math.max(taken - returned - lost, 0)
+    const revenue = sold * Number(item.sale_price_at_time || 0)
+    const cost = sold * Number(item.cost_at_time || 0)
+    const profit = revenue - cost
+    const lossValue = lost * Number(item.cost_at_time || 0)
+
+    revenueTotal += revenue
+    costTotal += cost
+    profitTotal += profit
+    lossTotal += lossValue
+
+    const { error: itemError } = await supabase
+      .from('fair_items')
+      .update({
+        quantity_returned: returned,
+        quantity_lost: lost,
+        quantity_sold: sold,
+        revenue,
+        cost,
+        profit,
+        loss_value: lossValue,
+      })
+      .eq('id', item.id)
+
+    if (itemError) throw itemError
+
+    if (returned > 0) {
+      const { data: product, error: productReadError } = await supabase
+        .from('products')
+        .select('stock')
+        .eq('id', item.product_id)
+        .single()
+
+      if (productReadError) throw productReadError
+
+      const { error: productError } = await supabase
+        .from('products')
+        .update({ stock: Number(product.stock || 0) + returned })
+        .eq('id', item.product_id)
+
+      if (productError) throw productError
+    }
+  }
+
+  const { error: fairError } = await supabase
+    .from('fairs')
+    .update({
+      status: 'closed',
+      revenue_total: revenueTotal,
+      cost_total: costTotal,
+      profit_total: profitTotal,
+      loss_total: lossTotal,
+      closed_at: new Date().toISOString(),
+    })
+    .eq('id', fair.id)
+
+  if (fairError) throw fairError
+}
+
+export async function getClosedFairs(userId) {
+  const { data, error } = await supabase
+    .from('fairs')
+    .select('*, fair_items(*)')
+    .eq('user_id', userId)
+    .eq('status', 'closed')
+    .order('closed_at', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+
+export async function getOrCreateProfile(user) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (error) throw error
+  if (data) return data
+
+  const fallbackName = user.email?.split('@')[0] || 'Feirante'
+
+  const { data: created, error: createError } = await supabase
+    .from('profiles')
+    .insert({
+      id: user.id,
+      name: fallbackName,
+      stall_name: 'Minha banca',
+      city: '',
+      first_login: true,
+    })
+    .select()
+    .single()
+
+  if (createError) throw createError
+  return created
+}
+
+export async function changeFirstPassword(newPassword) {
+  const { error: authError } = await supabase.auth.updateUser({
+    password: newPassword,
+  })
+
+  if (authError) throw authError
+
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+  if (userError) throw userError
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ first_login: false })
+    .eq('id', userData.user.id)
+
+  if (profileError) throw profileError
+}
