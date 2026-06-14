@@ -20,9 +20,9 @@ export default function Dashboard({ products, fairs, activeFair, setPage }) {
           <small>Toque para encerrar e calcular o resultado.</small>
         </button>
       ) : (
-        <button className="action-card success" onClick={() => setPage('comecar')}>
-          <strong>Começar feira</strong>
-          <span>Informe o que está levando hoje.</span>
+        <button className="action-card success" onClick={() => setPage('feiras')}>
+          <strong>Minhas feiras</strong>
+          <span>Escolha uma feira cadastrada para iniciar.</span>
         </button>
       )}
 
@@ -45,6 +45,8 @@ export default function Dashboard({ products, fairs, activeFair, setPage }) {
         <h3>Ações rápidas</h3>
         <div className="quick-grid">
           <button onClick={() => setPage('estoque')}>Estoque</button>
+          <button onClick={() => setPage('categorias')}>Categorias</button>
+          <button onClick={() => setPage('feiras')}>Feiras</button>
           <button onClick={() => setPage('compras')}>Compra</button>
           <button onClick={() => setPage('historico')}>Histórico</button>
         </div>

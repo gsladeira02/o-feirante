@@ -1,97 +1,81 @@
-import { useState } from 'react'
-import { createProduct, deleteProduct } from '../services/api'
-import { money, number } from '../utils/format'
+import { useEffect, useState } from 'react'
+import { startFair } from '../services/api'
+import { number } from '../utils/format'
 
-export default function Estoque({ user, products, reload }) {
-  const [form, setForm] = useState({ name: '', category: '', unit: 'kg', stock: '', average_cost: '', sale_price: '' })
+export default function ComecarFeira({ user, products, selectedFairPlace, reload, setPage }) {
+  const [items, setItems] = useState(products.map((p) => ({ ...p, quantity_taken: '' })))
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    setItems(products.map((p) => ({ ...p, quantity_taken: '' })))
+  }, [products])
+
+  if (!selectedFairPlace) {
+    return (
+      <main className="page">
+        <h2>Escolha uma feira</h2>
+        <p className="muted">Antes de iniciar, cadastre uma feira e toque nela.</p>
+        <button className="primary-btn" onClick={() => setPage('feiras')}>Ir para minhas feiras</button>
+      </main>
+    )
+  }
+
+  function updateQuantity(id, value) {
+    setItems(items.map((item) => item.id === id ? { ...item, quantity_taken: value } : item))
+  }
 
   async function submit(event) {
     event.preventDefault()
     setMessage('')
 
     try {
-      await createProduct({
-        user_id: user.id,
-        name: form.name,
-        category: form.category,
-        unit: form.unit,
-        stock: Number(form.stock || 0),
-        average_cost: Number(form.average_cost || 0),
-        sale_price: Number(form.sale_price || 0),
+      await startFair({
+        userId: user.id,
+        fairPlace: selectedFairPlace,
+        items,
       })
-      setForm({ name: '', category: '', unit: 'kg', stock: '', average_cost: '', sale_price: '' })
       await reload()
+      setPage('dashboard')
     } catch (error) {
       setMessage(error.message)
     }
   }
 
-  async function remove(id) {
-    if (!confirm('Excluir este produto?')) return
-    await deleteProduct(id)
-    await reload()
-  }
-
   return (
     <main className="page">
-      <h2>Estoque</h2>
+      <h2>Iniciar feira</h2>
+      <section className="selected-fair-card">
+        <strong>{selectedFairPlace.name}</strong>
+        <span>{selectedFairPlace.weekday || 'Dia não informado'} {selectedFairPlace.address ? `· ${selectedFairPlace.address}` : ''}</span>
+      </section>
 
-      <form className="form-card compact" onSubmit={submit}>
-        <h3>Novo produto</h3>
+      <p className="muted">Informe tudo que está levando para esta feira.</p>
 
-        <label>Produto</label>
-        <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Banana" required />
-
-        <div className="row">
-          <div>
-            <label>Categoria</label>
-            <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Fruta" />
-          </div>
-          <div>
-            <label>Unidade</label>
-            <select value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}>
-              <option value="kg">kg</option>
-              <option value="un">un</option>
-              <option value="dz">dúzia</option>
-              <option value="cx">caixa</option>
-              <option value="maço">maço</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="row">
-          <div>
-            <label>Estoque</label>
-            <input type="number" step="0.01" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
-          </div>
-          <div>
-            <label>Venda</label>
-            <input type="number" step="0.01" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: e.target.value })} />
-          </div>
-        </div>
-
-        <label>Custo médio</label>
-        <input type="number" step="0.01" value={form.average_cost} onChange={(e) => setForm({ ...form, average_cost: e.target.value })} />
+      <form onSubmit={submit}>
+        <section className="list">
+          {items.map((product) => (
+            <article className="item-card input-card" key={product.id}>
+              <div>
+                <strong>{product.name}</strong>
+                <span>{product.categories?.name || product.category || 'Sem categoria'}</span>
+                <small>Disponível: {number(product.stock)} {product.unit}</small>
+              </div>
+              <input
+                type="number"
+                step="0.01"
+                max={product.stock}
+                value={product.quantity_taken}
+                onChange={(e) => updateQuantity(product.id, e.target.value)}
+                placeholder="Levou"
+              />
+            </article>
+          ))}
+        </section>
 
         {message && <p className="message">{message}</p>}
-        <button className="primary-btn">Salvar produto</button>
+
+        <button className="primary-btn sticky-btn">Iniciar {selectedFairPlace.name}</button>
       </form>
-
-      <section className="list">
-        {products.map((product) => (
-          <article className="item-card" key={product.id}>
-            <div>
-              <strong>{product.name}</strong>
-              <span>{number(product.stock)} {product.unit} em estoque</span>
-              <small>Custo {money(product.average_cost)} · Venda {money(product.sale_price)}</small>
-            </div>
-            <button className="mini-btn danger-text" onClick={() => remove(product.id)}>Excluir</button>
-          </article>
-        ))}
-
-        {!products.length && <p className="empty">Nenhum produto cadastrado ainda.</p>}
-      </section>
     </main>
   )
 }

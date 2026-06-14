@@ -1,67 +1,46 @@
-import { useState } from 'react'
-import { startFair } from '../services/api'
-import { number } from '../utils/format'
+import { money, number } from '../utils/format'
 
-export default function ComecarFeira({ user, products, reload, setPage }) {
-  const [name, setName] = useState('')
-  const [items, setItems] = useState(products.map((p) => ({ ...p, quantity_taken: '' })))
-  const [message, setMessage] = useState('')
-
-  function updateQuantity(id, value) {
-    setItems(items.map((item) => item.id === id ? { ...item, quantity_taken: value } : item))
-  }
-
-  async function submit(event) {
-    event.preventDefault()
-    setMessage('')
-
-    try {
-      await startFair({
-        userId: user.id,
-        name: name || 'Feira de hoje',
-        items,
-      })
-      await reload()
-      setPage('dashboard')
-    } catch (error) {
-      setMessage(error.message)
-    }
-  }
-
+export default function Historico({ fairs }) {
   return (
     <main className="page">
-      <h2>Começar feira</h2>
-      <p className="muted">Informe tudo que está levando para a banca.</p>
+      <h2>Histórico</h2>
 
-      <form onSubmit={submit}>
-        <section className="form-card compact">
-          <label>Nome ou local da feira</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Feira da Glória" />
-        </section>
+      <section className="list">
+        {fairs.map((fair) => (
+          <article className="history-card" key={fair.id}>
+            <div>
+              <strong>{fair.name}</strong>
+              <span>{new Date(fair.closed_at || fair.created_at).toLocaleDateString('pt-BR')}</span>
+            </div>
 
-        <section className="list">
-          {items.map((product) => (
-            <article className="item-card input-card" key={product.id}>
+            <div className="result-grid">
               <div>
-                <strong>{product.name}</strong>
-                <span>Disponível: {number(product.stock)} {product.unit}</span>
+                <small>Faturamento</small>
+                <strong>{money(fair.revenue_total)}</strong>
               </div>
-              <input
-                type="number"
-                step="0.01"
-                max={product.stock}
-                value={product.quantity_taken}
-                onChange={(e) => updateQuantity(product.id, e.target.value)}
-                placeholder="Levou"
-              />
-            </article>
-          ))}
-        </section>
+              <div>
+                <small>Lucro</small>
+                <strong>{money(fair.profit_total)}</strong>
+              </div>
+              <div>
+                <small>Perdas</small>
+                <strong>{money(fair.loss_total)}</strong>
+              </div>
+            </div>
 
-        {message && <p className="message">{message}</p>}
+            <details>
+              <summary>Ver produtos</summary>
+              {(fair.fair_items || []).map((item) => (
+                <p key={item.id}>
+                  {item.product_name}: vendeu {number(item.quantity_sold)} {item.unit}
+                </p>
+              ))}
+            </details>
+          </article>
+        ))}
 
-        <button className="primary-btn sticky-btn">Iniciar feira</button>
-      </form>
+        {!fairs.length && <p className="empty">Nenhuma feira encerrada ainda.</p>}
+      </section>
     </main>
   )
 }

@@ -1,31 +1,36 @@
 import { useState } from 'react'
-import { registerPurchase } from '../services/api'
+import { closeFair } from '../services/api'
+import { number } from '../utils/format'
 
-export default function Compras({ user, products, reload }) {
-  const [productId, setProductId] = useState('')
-  const [quantity, setQuantity] = useState('')
-  const [totalValue, setTotalValue] = useState('')
-  const [supplier, setSupplier] = useState('')
+export default function EncerrarFeira({ activeFair, reload, setPage }) {
+  const [items, setItems] = useState((activeFair?.fair_items || []).map((item) => ({
+    ...item,
+    quantity_returned: '',
+    quantity_lost: '',
+  })))
   const [message, setMessage] = useState('')
+
+  if (!activeFair) {
+    return (
+      <main className="page">
+        <h2>Nenhuma feira em andamento</h2>
+        <p className="muted">Comece uma feira para depois encerrá-la.</p>
+      </main>
+    )
+  }
+
+  function updateItem(id, field, value) {
+    setItems(items.map((item) => item.id === id ? { ...item, [field]: value } : item))
+  }
 
   async function submit(event) {
     event.preventDefault()
     setMessage('')
 
-    const product = products.find((item) => item.id === productId)
-    if (!product) {
-      setMessage('Selecione um produto.')
-      return
-    }
-
     try {
-      await registerPurchase({ userId: user.id, product, quantity, totalValue, supplier })
-      setProductId('')
-      setQuantity('')
-      setTotalValue('')
-      setSupplier('')
-      setMessage('Compra registrada e estoque atualizado.')
+      await closeFair({ fair: activeFair, closingItems: items })
       await reload()
+      setPage('historico')
     } catch (error) {
       setMessage(error.message)
     }
@@ -33,29 +38,46 @@ export default function Compras({ user, products, reload }) {
 
   return (
     <main className="page">
-      <h2>Comprar mercadoria</h2>
+      <h2>Encerrar feira</h2>
+      <p className="muted">{activeFair.name}</p>
 
-      <form className="form-card" onSubmit={submit}>
-        <label>Produto</label>
-        <select value={productId} onChange={(e) => setProductId(e.target.value)} required>
-          <option value="">Selecione</option>
-          {products.map((product) => (
-            <option value={product.id} key={product.id}>{product.name}</option>
+      <form onSubmit={submit}>
+        <section className="list">
+          {items.map((item) => (
+            <article className="close-card" key={item.id}>
+              <div className="close-header">
+                <strong>{item.product_name}</strong>
+                <span>Levou {number(item.quantity_taken)} {item.unit}</span>
+              </div>
+
+              <div className="row">
+                <div>
+                  <label>Voltou</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={item.quantity_returned}
+                    onChange={(e) => updateItem(item.id, 'quantity_returned', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label>Perdeu</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={item.quantity_lost}
+                    onChange={(e) => updateItem(item.id, 'quantity_lost', e.target.value)}
+                  />
+                </div>
+              </div>
+            </article>
           ))}
-        </select>
-
-        <label>Quantidade comprada</label>
-        <input type="number" step="0.01" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
-
-        <label>Valor total pago</label>
-        <input type="number" step="0.01" value={totalValue} onChange={(e) => setTotalValue(e.target.value)} required />
-
-        <label>Fornecedor</label>
-        <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Opcional" />
+        </section>
 
         {message && <p className="message">{message}</p>}
 
-        <button className="primary-btn">Registrar compra</button>
+        <button className="primary-btn sticky-btn">Calcular resultado</button>
       </form>
     </main>
   )

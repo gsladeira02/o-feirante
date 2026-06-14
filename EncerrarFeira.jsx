@@ -211,7 +211,7 @@ button {
 
 .quick-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 9px;
 }
 
@@ -405,7 +405,7 @@ summary {
   border-radius: 26px;
   padding: 8px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   backdrop-filter: blur(12px);
 }
 
@@ -445,4 +445,53 @@ summary {
   font-size: 13px;
   text-align: center;
   line-height: 1.4;
+}
+
+.secondary-btn {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 13px 16px;
+  background: #fff7ed;
+  color: var(--green);
+  font-weight: 900;
+}
+
+.fair-place-card {
+  align-items: stretch;
+}
+
+.fair-start {
+  flex: 1;
+  border: none;
+  background: transparent;
+  text-align: left;
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  color: inherit;
+}
+
+.fair-start small {
+  color: var(--green);
+  font-weight: 800;
+}
+
+.selected-fair-card {
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 22px;
+  padding: 16px;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.selected-fair-card strong {
+  color: var(--green);
+  font-size: 20px;
+}
+
+.selected-fair-card span {
+  color: #166534;
 }

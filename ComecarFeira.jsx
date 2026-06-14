@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { hasSupabaseConfig, supabase } from './supabase'
-import { getActiveFair, getClosedFairs, getOrCreateProfile, getProducts, signOut } from './services/api'
+import { getActiveFair, getCategories, getClosedFairs, getFairPlaces, getOrCreateProfile, getProducts, signOut } from './services/api'
 import Header from './components/Header'
 import BottomNav from './components/BottomNav'
 import Login from './pages/Login'
 import ChangePassword from './pages/ChangePassword'
 import Dashboard from './pages/Dashboard'
 import Estoque from './pages/Estoque'
+import Categorias from './pages/Categorias'
+import Feiras from './pages/Feiras'
 import Compras from './pages/Compras'
 import ComecarFeira from './pages/ComecarFeira'
 import EncerrarFeira from './pages/EncerrarFeira'
@@ -17,6 +19,9 @@ export default function App() {
   const [page, setPage] = useState('dashboard')
   const [profile, setProfile] = useState(null)
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [fairPlaces, setFairPlaces] = useState([])
+  const [selectedFairPlace, setSelectedFairPlace] = useState(null)
   const [fairs, setFairs] = useState([])
   const [activeFair, setActiveFair] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -31,13 +36,16 @@ export default function App() {
 
     if (profileData.first_login) return
 
-    const [productsData, fairsData, activeFairData] = await Promise.all([
+    const [productsData, categoriesData, fairPlacesData, fairsData, activeFairData] = await Promise.all([
       getProducts(currentUser.id),
+      getCategories(currentUser.id),
+      getFairPlaces(currentUser.id),
       getClosedFairs(currentUser.id),
       getActiveFair(currentUser.id),
     ])
     setProducts(productsData)
-    setFairs(fairsData)
+    setCategories(categoriesData)
+    setFairPlaces(fairPlacesData)
     setActiveFair(activeFairData)
   }
 
@@ -73,6 +81,9 @@ export default function App() {
     setSession(null)
     setProfile(null)
     setProducts([])
+    setCategories([])
+    setFairPlaces([])
+    setSelectedFairPlace(null)
     setFairs([])
     setActiveFair(null)
   }
@@ -102,7 +113,21 @@ export default function App() {
       )}
 
       {page === 'estoque' && (
-        <Estoque user={user} products={products} reload={loadData} />
+        <Estoque user={user} products={products} categories={categories} reload={loadData} setPage={setPage} />
+      )}
+
+      {page === 'categorias' && (
+        <Categorias user={user} categories={categories} reload={loadData} />
+      )}
+
+      {page === 'feiras' && (
+        <Feiras
+          user={user}
+          fairPlaces={fairPlaces}
+          reload={loadData}
+          setPage={setPage}
+          setSelectedFairPlace={setSelectedFairPlace}
+        />
       )}
 
       {page === 'compras' && (
@@ -110,7 +135,13 @@ export default function App() {
       )}
 
       {page === 'comecar' && (
-        <ComecarFeira user={user} products={products} reload={loadData} setPage={setPage} />
+        <ComecarFeira
+          user={user}
+          products={products}
+          selectedFairPlace={selectedFairPlace}
+          reload={loadData}
+          setPage={setPage}
+        />
       )}
 
       {page === 'encerrar' && (
@@ -121,7 +152,7 @@ export default function App() {
         <Historico fairs={fairs} />
       )}
 
-      <BottomNav page={page} setPage={setPage} hasActiveFair={Boolean(activeFair)} />
+      <BottomNav page={page} setPage={setPage} />
     </div>
   )
 }

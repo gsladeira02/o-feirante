@@ -1,83 +1,72 @@
 import { useState } from 'react'
-import { closeFair } from '../services/api'
-import { number } from '../utils/format'
+import { changeFirstPassword } from '../services/api'
 
-export default function EncerrarFeira({ activeFair, reload, setPage }) {
-  const [items, setItems] = useState((activeFair?.fair_items || []).map((item) => ({
-    ...item,
-    quantity_returned: '',
-    quantity_lost: '',
-  })))
+export default function ChangePassword({ onDone }) {
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
-
-  if (!activeFair) {
-    return (
-      <main className="page">
-        <h2>Nenhuma feira em andamento</h2>
-        <p className="muted">Comece uma feira para depois encerrá-la.</p>
-      </main>
-    )
-  }
-
-  function updateItem(id, field, value) {
-    setItems(items.map((item) => item.id === id ? { ...item, [field]: value } : item))
-  }
 
   async function submit(event) {
     event.preventDefault()
     setMessage('')
 
+    if (password.length < 6) {
+      setMessage('A nova senha precisa ter pelo menos 6 caracteres.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setMessage('As senhas não conferem.')
+      return
+    }
+
+    setLoading(true)
+
     try {
-      await closeFair({ fair: activeFair, closingItems: items })
-      await reload()
-      setPage('historico')
+      await changeFirstPassword(password)
+      await onDone()
     } catch (error) {
       setMessage(error.message)
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <main className="page">
-      <h2>Encerrar feira</h2>
-      <p className="muted">{activeFair.name}</p>
+    <main className="login-screen">
+      <section className="brand-card">
+        <div className="logo-mark">OF</div>
+        <h1>Primeiro acesso</h1>
+        <p>Por segurança, defina sua nova senha antes de usar o aplicativo.</p>
+      </section>
 
-      <form onSubmit={submit}>
-        <section className="list">
-          {items.map((item) => (
-            <article className="close-card" key={item.id}>
-              <div className="close-header">
-                <strong>{item.product_name}</strong>
-                <span>Levou {number(item.quantity_taken)} {item.unit}</span>
-              </div>
+      <form className="form-card" onSubmit={submit}>
+        <h2>Alterar senha</h2>
 
-              <div className="row">
-                <div>
-                  <label>Voltou</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.quantity_returned}
-                    onChange={(e) => updateItem(item.id, 'quantity_returned', e.target.value)}
-                  />
-                </div>
+        <label>Nova senha</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          minLength="6"
+          required
+        />
 
-                <div>
-                  <label>Perdeu</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.quantity_lost}
-                    onChange={(e) => updateItem(item.id, 'quantity_lost', e.target.value)}
-                  />
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
+        <label>Confirmar nova senha</label>
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          minLength="6"
+          required
+        />
 
         {message && <p className="message">{message}</p>}
 
-        <button className="primary-btn sticky-btn">Calcular resultado</button>
+        <button className="primary-btn" disabled={loading}>
+          {loading ? 'Salvando...' : 'Salvar senha e entrar'}
+        </button>
       </form>
     </main>
   )
