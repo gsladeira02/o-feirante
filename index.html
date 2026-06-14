@@ -1,60 +1,15 @@
-import { dateBR, money, qty } from '../utils/format'
-
-export default function Historico({ fairs }) {
-  const groups = fairs.reduce((acc, fair) => {
-    const key = fair.fair_places?.name || fair.name || 'Sem local'
-    if (!acc[key]) acc[key] = []
-    acc[key].push(fair)
-    return acc
-  }, {})
-
-  return (
-    <main className="page">
-      <h2>Histórico por feira</h2>
-
-      {Object.entries(groups).map(([placeName, placeFairs]) => {
-        const revenue = placeFairs.reduce((sum, fair) => sum + Number(fair.revenue_total || 0), 0)
-        const profit = placeFairs.reduce((sum, fair) => sum + Number(fair.profit_total || 0), 0)
-
-        return (
-          <section className="history-group" key={placeName}>
-            <div className="group-header">
-              <div>
-                <h3>{placeName}</h3>
-                <span>{placeFairs.length} feira(s) encerrada(s)</span>
-              </div>
-              <strong>{money(revenue)}</strong>
-            </div>
-            <small>Lucro estimado: {money(profit)}</small>
-
-            <div className="list nested">
-              {placeFairs.map((fair) => (
-                <article className="history-card" key={fair.id}>
-                  <div>
-                    <strong>{dateBR(fair.closed_at)}</strong>
-                    <span>{fair.fair_places?.weekday || ''}</span>
-                  </div>
-
-                  <div className="result-grid">
-                    <div><small>Faturamento</small><strong>{money(fair.revenue_total)}</strong></div>
-                    <div><small>Lucro</small><strong>{money(fair.profit_total)}</strong></div>
-                    <div><small>Perdas</small><strong>{money(fair.loss_total)}</strong></div>
-                  </div>
-
-                  <details>
-                    <summary>Ver produtos</summary>
-                    {(fair.fair_items || []).map((item) => (
-                      <p key={item.id}>{item.product_name}: vendeu {qty(item.quantity_sold)} {item.unit}</p>
-                    ))}
-                  </details>
-                </article>
-              ))}
-            </div>
-          </section>
-        )
-      })}
-
-      {!fairs.length && <p className="empty">Nenhuma feira encerrada ainda.</p>}
-    </main>
-  )
-}
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#166534" />
+    <link rel="icon" href="/logo.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>O Feirante</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
