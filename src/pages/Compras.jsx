@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import { registerPurchase } from '../services/api'
 
-export default function Compras({ user, products, reload }) {
+export default function Compras({ user, products, reload, readOnly = false, onBlockedAction }) {
   const [productId, setProductId] = useState('')
   const [quantity, setQuantity] = useState('')
   const [totalValue, setTotalValue] = useState('')
-  const [supplier, setSupplier] = useState('')
   const [message, setMessage] = useState('')
 
   async function submit(event) {
     event.preventDefault()
     setMessage('')
+
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+      return
+    }
 
     const product = products.find((item) => item.id === productId)
 
@@ -30,11 +34,10 @@ export default function Compras({ user, products, reload }) {
     }
 
     try {
-      await registerPurchase({ userId: user.id, product, quantity, totalValue, supplier })
+      await registerPurchase({ userId: user.id, product, quantity, totalValue })
       setProductId('')
       setQuantity('')
       setTotalValue('')
-      setSupplier('')
       setMessage('Entrada registrada.')
       await reload()
     } catch (error) {

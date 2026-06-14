@@ -1,89 +1,60 @@
-# O Feirante V2
+# O Feirante V3.2
 
-Aplicativo mobile-first para feirantes.
+Sistema de gestão para feirantes: estoque, entrada de mercadoria, feiras, histórico e inteligência da banca.
 
-## V2 inclui
+## Novidades da V3.2
 
-- Logo atualizada: barraca de feira com gráfico de crescimento.
+- Links de **Termos de Uso** e **Política de Privacidade** na tela de login.
+- Textos legais dentro do próprio app, em janela de leitura.
+- Aviso de concordância no login.
+- Tela amigável para **conta inativa**.
+- Remoção do campo interno de fornecedor na entrada de mercadoria.
+- Migração SQL completa para reforçar bloqueio de conta demo e contas inativas.
+- Mantém bloqueio visual da conta teste com mensagem de demonstração.
 
-- Acesso fechado: sem cadastro público.
-- Usuários criados manualmente no Supabase.
-- Troca obrigatória de senha no primeiro acesso.
-- Cadastro de categorias.
-- Produto com categoria selecionável.
-- Cadastro de feiras/locais.
-- Início de feira tocando em uma feira cadastrada.
-- Encerramento calculando vendido, retornado, perdido, faturamento e lucro.
-- Histórico agrupado por local da feira.
+## Conta demo
 
-## Instalação
+A conta demo conhecida é:
 
-```bash
-npm install
-npm run dev
+- E-mail: `teste@ofeirante.com`
+- UID: `4cfdc4be-5aab-480a-8d84-0c222bac0dd1`
+
+Ela deve estar na tabela `user_access` com:
+
+- `read_only = true`
+- `is_active = true`
+
+## Subir no GitHub/Vercel
+
+Extraia o ZIP e envie para o repositório os arquivos de dentro da pasta `o-feirante-v3-2`, não a pasta inteira.
+
+Estrutura correta na raiz do GitHub:
+
+```txt
+package.json
+index.html
+vite.config.js
+README.md
+public/
+src/
+supabase/
 ```
+
+## Variáveis de ambiente na Vercel
+
+```txt
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_chave_publishable_ou_anon
+```
+
+Depois de alterar variáveis, faça redeploy.
 
 ## Supabase
 
-Se for projeto novo, rode:
+Para reforçar as regras de acesso, rode no SQL Editor:
 
 ```txt
-supabase/schema.sql
+supabase/migration-v3-2-politicas-acesso.sql
 ```
 
-Se você já usava a versão anterior, rode:
-
-```txt
-supabase/migration-v2.sql
-```
-
-## Vercel
-
-Variáveis obrigatórias:
-
-```txt
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
-```
-
-## Criar assinante
-
-No Supabase:
-
-```txt
-Authentication > Users > Add User
-```
-
-Crie e-mail e senha provisória. No primeiro login, o usuário será obrigado a alterar a senha.
-
-
-## V2.1
-
-Inclui:
-- Validações contra valores negativos.
-- Bloqueio para iniciar feira com quantidade maior que o estoque.
-- Bloqueio para encerrar feira quando voltou + perdeu for maior que levou.
-- Edição de produtos.
-- Edição de categorias.
-- Edição de feiras/locais.
-- Resumo antes de confirmar o encerramento da feira.
-
-
-## V3
-
-Inclui:
-- Dashboard avançado do mês.
-- Página de inteligência.
-- Produtos mais vendidos.
-- Produtos mais lucrativos.
-- Produtos com mais perdas.
-- Comparativo entre feiras por lucro médio.
-- Evolução mensal com gráfico simples.
-- Meta mensal de faturamento.
-- Sugestão automática do que levar para cada feira.
-- Entrada de mercadoria em vez de "comprar mercadoria".
-
-
-## Manual do cliente
-
-Incluído no projeto: `Manual_Cliente_O_Feirante_V3.pdf`.
+Esse arquivo remove policies antigas, recria policies com controle de escrita e mantém a conta teste bloqueada para alterações.

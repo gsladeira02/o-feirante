@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createCategory, deleteCategory, updateCategory } from '../services/api'
 
-export default function Categorias({ user, categories, reload }) {
+export default function Categorias({ user, categories, reload, readOnly = false, onBlockedAction }) {
   const [name, setName] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editingName, setEditingName] = useState('')
@@ -10,6 +10,11 @@ export default function Categorias({ user, categories, reload }) {
   async function submit(event) {
     event.preventDefault()
     setMessage('')
+
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+      return
+    }
 
     try {
       await createCategory({ userId: user.id, name })
@@ -24,6 +29,11 @@ export default function Categorias({ user, categories, reload }) {
     event.preventDefault()
     setMessage('')
 
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+      return
+    }
+
     try {
       await updateCategory({ id: editingId, name: editingName })
       setEditingId(null)
@@ -35,9 +45,20 @@ export default function Categorias({ user, categories, reload }) {
   }
 
   async function remove(id) {
+    setMessage('')
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+      return
+    }
+
     if (!confirm('Excluir categoria? Os produtos continuarão cadastrados, mas ficarão sem categoria.')) return
-    await deleteCategory(id)
-    await reload()
+
+    try {
+      await deleteCategory(id)
+      await reload()
+    } catch (error) {
+      setMessage(error.message)
+    }
   }
 
   return (
@@ -71,6 +92,11 @@ export default function Categorias({ user, categories, reload }) {
                 </div>
                 <div className="card-actions">
                   <button className="mini-btn" onClick={() => {
+                    setMessage('')
+                    if (readOnly) {
+                      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+                      return
+                    }
                     setEditingId(category.id)
                     setEditingName(category.name)
                   }}>Editar</button>

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { closeFair } from '../services/api'
 import { money, qty } from '../utils/format'
 
-export default function EncerrarFeira({ activeFair, reload, setPage }) {
+export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = false, onBlockedAction }) {
   const [items, setItems] = useState((activeFair?.fair_items || []).map((item) => ({
     ...item,
     quantity_returned: '',
@@ -77,6 +77,11 @@ export default function EncerrarFeira({ activeFair, reload, setPage }) {
 
   async function confirmClose() {
     setMessage('')
+
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Encerrar feira está bloqueado.')
+      return
+    }
 
     const errorMessage = validateClosing()
     if (errorMessage) {

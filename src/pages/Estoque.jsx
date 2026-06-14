@@ -11,7 +11,7 @@ const emptyForm = {
   sale_price: '',
 }
 
-export default function Estoque({ user, products, categories, reload, setPage }) {
+export default function Estoque({ user, products, categories, reload, setPage, readOnly = false, onBlockedAction }) {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState(emptyForm)
@@ -28,6 +28,11 @@ export default function Estoque({ user, products, categories, reload, setPage })
   async function submit(event) {
     event.preventDefault()
     setMessage('')
+
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+      return
+    }
 
     const errorMessage = validateProduct(form)
     if (errorMessage) {
@@ -54,6 +59,12 @@ export default function Estoque({ user, products, categories, reload, setPage })
   }
 
   function startEdit(product) {
+    setMessage('')
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+      return
+    }
+
     setEditingId(product.id)
     setEditForm({
       name: product.name || '',
@@ -68,6 +79,11 @@ export default function Estoque({ user, products, categories, reload, setPage })
   async function saveEdit(event) {
     event.preventDefault()
     setMessage('')
+
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+      return
+    }
 
     const errorMessage = validateProduct(editForm)
     if (errorMessage) {
@@ -91,9 +107,20 @@ export default function Estoque({ user, products, categories, reload, setPage })
   }
 
   async function remove(id) {
+    setMessage('')
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+      return
+    }
+
     if (!confirm('Excluir produto?')) return
-    await deleteProduct(id)
-    await reload()
+
+    try {
+      await deleteProduct(id)
+      await reload()
+    } catch (error) {
+      setMessage(error.message)
+    }
   }
 
   function ProductFields({ data, setData }) {

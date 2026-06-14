@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { supabase, hasSupabaseConfig } from '../supabase'
+import { PrivacyPolicy, TermsOfUse } from '../components/LegalDocuments'
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [legalView, setLegalView] = useState(null)
 
   async function submit(event) {
     event.preventDefault()
@@ -49,7 +51,22 @@ export default function Login({ onLogin }) {
 
         <button className="primary-btn" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
         <p className="access-note">Sua conta é criada pelo administrador após a assinatura.</p>
+        <p className="legal-note">
+          Ao acessar o O Feirante, você concorda com os{' '}
+          <button type="button" onClick={() => setLegalView('terms')}>Termos de Uso</button>
+          {' '}e com a{' '}
+          <button type="button" onClick={() => setLegalView('privacy')}>Política de Privacidade</button>.
+        </p>
       </form>
+
+      {legalView && (
+        <div className="legal-modal" role="dialog" aria-modal="true">
+          <div className="legal-box">
+            <button className="legal-close" onClick={() => setLegalView(null)}>Fechar</button>
+            {legalView === 'privacy' ? <PrivacyPolicy /> : <TermsOfUse />}
+          </div>
+        </div>
+      )}
     </main>
   )
 }
