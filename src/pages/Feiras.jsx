@@ -3,7 +3,7 @@ import { createFairPlace, deleteFairPlace, updateFairPlace } from '../services/a
 
 const emptyForm = { name: '', address: '', weekday: '' }
 
-export default function Feiras({ user, fairPlaces, reload, setPage, setSelectedFairPlace, readOnly = false, onBlockedAction }) {
+export default function Feiras({ user, fairPlaces, reload, setPage, setSelectedFairPlace }) {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState(emptyForm)
@@ -12,11 +12,6 @@ export default function Feiras({ user, fairPlaces, reload, setPage, setSelectedF
   async function submit(event) {
     event.preventDefault()
     setMessage('')
-
-    if (readOnly) {
-      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
-      return
-    }
 
     try {
       await createFairPlace({
@@ -34,12 +29,6 @@ export default function Feiras({ user, fairPlaces, reload, setPage, setSelectedF
   }
 
   function startEdit(place) {
-    setMessage('')
-    if (readOnly) {
-      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
-      return
-    }
-
     setEditingId(place.id)
     setEditForm({
       name: place.name || '',
@@ -51,11 +40,6 @@ export default function Feiras({ user, fairPlaces, reload, setPage, setSelectedF
   async function saveEdit(event) {
     event.preventDefault()
     setMessage('')
-
-    if (readOnly) {
-      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
-      return
-    }
 
     try {
       await updateFairPlace({
@@ -74,29 +58,12 @@ export default function Feiras({ user, fairPlaces, reload, setPage, setSelectedF
   }
 
   async function remove(id) {
-    setMessage('')
-    if (readOnly) {
-      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
-      return
-    }
-
     if (!confirm('Excluir feira cadastrada?')) return
-
-    try {
-      await deleteFairPlace(id)
-      await reload()
-    } catch (error) {
-      setMessage(error.message)
-    }
+    await deleteFairPlace(id)
+    await reload()
   }
 
   function start(place) {
-    setMessage('')
-    if (readOnly) {
-      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Iniciar feira está bloqueado.')
-      return
-    }
-
     setSelectedFairPlace(place)
     setPage('comecar')
   }

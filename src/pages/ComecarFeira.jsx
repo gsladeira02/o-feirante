@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { startFair } from '../services/api'
 import { qty } from '../utils/format'
 
-export default function ComecarFeira({ user, products, selectedFairPlace, reload, setPage, readOnly = false, onBlockedAction }) {
+export default function ComecarFeira({ user, products, selectedFairPlace, reload, setPage }) {
   const [items, setItems] = useState([])
   const [message, setMessage] = useState('')
 
@@ -27,11 +27,6 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
   async function submit(event) {
     event.preventDefault()
     setMessage('')
-
-    if (readOnly) {
-      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Iniciar feira está bloqueado.')
-      return
-    }
 
     const selected = items.filter((item) => Number(item.quantity_taken || 0) > 0)
 

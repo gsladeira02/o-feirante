@@ -1,38 +1,5 @@
 import { supabase } from '../supabase'
 
-export const DEMO_ACCOUNT_MESSAGE = 'Esta é uma conta teste. As ações de cadastro, edição, exclusão, entrada de mercadoria e início/encerramento de feira estão bloqueadas para demonstração.'
-
-export async function getUserAccess(userId) {
-  const { data, error } = await supabase
-    .from('user_access')
-    .select('read_only, is_active, label')
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  if (error?.code === '42P01' || error?.code === 'PGRST205' || error?.message?.includes('user_access')) {
-    return { read_only: false, is_active: true, label: null }
-  }
-
-  if (error) throw error
-  return data || { read_only: false, is_active: true, label: null }
-}
-
-async function ensureCanWrite() {
-  const { data, error } = await supabase.auth.getUser()
-  if (error) throw error
-  if (!data?.user?.id) throw new Error('Usuário não autenticado.')
-
-  const access = await getUserAccess(data.user.id)
-
-  if (access.is_active === false) {
-    throw new Error('Sua conta está inativa. Entre em contato para regularizar o acesso.')
-  }
-
-  if (access.read_only) {
-    throw new Error(DEMO_ACCOUNT_MESSAGE)
-  }
-}
-
 export async function signOut() {
   return supabase.auth.signOut()
 }
@@ -90,7 +57,6 @@ export async function getCategories(userId) {
 }
 
 export async function createCategory({ userId, name }) {
-  await ensureCanWrite()
   const cleanName = name.trim()
   if (!cleanName) throw new Error('Informe o nome da categoria.')
 
@@ -103,7 +69,6 @@ export async function createCategory({ userId, name }) {
 }
 
 export async function deleteCategory(id) {
-  await ensureCanWrite()
   const { error } = await supabase.from('categories').delete().eq('id', id)
   if (error) throw error
 }
@@ -120,7 +85,6 @@ export async function getFairPlaces(userId) {
 }
 
 export async function createFairPlace({ userId, name, address, weekday }) {
-  await ensureCanWrite()
   const cleanName = name.trim()
   if (!cleanName) throw new Error('Informe o nome da feira.')
 
@@ -133,7 +97,6 @@ export async function createFairPlace({ userId, name, address, weekday }) {
 }
 
 export async function deleteFairPlace(id) {
-  await ensureCanWrite()
   const { error } = await supabase.from('fair_places').delete().eq('id', id)
   if (error) throw error
 }
@@ -150,19 +113,16 @@ export async function getProducts(userId) {
 }
 
 export async function createProduct(product) {
-  await ensureCanWrite()
   const { error } = await supabase.from('products').insert(product)
   if (error) throw error
 }
 
 export async function deleteProduct(id) {
-  await ensureCanWrite()
   const { error } = await supabase.from('products').delete().eq('id', id)
   if (error) throw error
 }
 
 export async function registerPurchase({ userId, product, quantity, totalValue, supplier }) {
-  await ensureCanWrite()
   const oldStock = Number(product.stock || 0)
   const oldCost = Number(product.average_cost || 0)
   const qty = Number(quantity || 0)
@@ -202,7 +162,6 @@ export async function getActiveFair(userId) {
 }
 
 export async function startFair({ userId, fairPlace, items }) {
-  await ensureCanWrite()
   const selected = items.filter((item) => Number(item.quantity_taken || 0) > 0)
   if (!selected.length) throw new Error('Informe pelo menos um produto levado.')
 
@@ -240,7 +199,6 @@ export async function startFair({ userId, fairPlace, items }) {
 }
 
 export async function closeFair({ fair, closingItems }) {
-  await ensureCanWrite()
   let revenueTotal = 0
   let costTotal = 0
   let profitTotal = 0
@@ -323,7 +281,6 @@ export async function getClosedFairs(userId) {
 
 
 export async function updateCategory({ id, name }) {
-  await ensureCanWrite()
   const cleanName = name.trim()
   if (!cleanName) throw new Error('Informe o nome da categoria.')
 
@@ -337,7 +294,6 @@ export async function updateCategory({ id, name }) {
 }
 
 export async function updateFairPlace({ id, name, address, weekday }) {
-  await ensureCanWrite()
   const cleanName = name.trim()
   if (!cleanName) throw new Error('Informe o nome da feira.')
 
@@ -351,7 +307,6 @@ export async function updateFairPlace({ id, name, address, weekday }) {
 }
 
 export async function updateProduct(product) {
-  await ensureCanWrite()
   const { error } = await supabase
     .from('products')
     .update({

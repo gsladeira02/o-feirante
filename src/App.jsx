@@ -5,10 +5,8 @@ import {
   getCategories,
   getClosedFairs,
   getFairPlaces,
-  DEMO_ACCOUNT_MESSAGE,
   getOrCreateProfile,
   getProducts,
-  getUserAccess,
   signOut,
 } from './services/api'
 
@@ -37,20 +35,14 @@ export default function App() {
   const [activeFair, setActiveFair] = useState(null)
   const [selectedFairPlace, setSelectedFairPlace] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [access, setAccess] = useState({ read_only: false, is_active: true, label: null })
 
   const user = session?.user
 
   async function loadData(currentUser = user) {
     if (!currentUser || !hasSupabaseConfig) return
 
-    const [profileData, accessData] = await Promise.all([
-      getOrCreateProfile(currentUser),
-      getUserAccess(currentUser.id),
-    ])
-
+    const profileData = await getOrCreateProfile(currentUser)
     setProfile(profileData)
-    setAccess(accessData)
 
     if (profileData.first_login) return
 
@@ -107,7 +99,6 @@ export default function App() {
     setFairs([])
     setActiveFair(null)
     setSelectedFairPlace(null)
-    setAccess({ read_only: false, is_active: true, label: null })
   }
 
   if (loading) return <div className="loading">Carregando...</div>
@@ -119,13 +110,6 @@ export default function App() {
     }} />
   }
 
-  const isDemoAccount = Boolean(access?.read_only)
-
-  function showDemoMessage() {
-    window.alert(DEMO_ACCOUNT_MESSAGE)
-    return DEMO_ACCOUNT_MESSAGE
-  }
-
   if (profile?.first_login) {
     return <ChangePassword onDone={async () => {
       await loadData(user)
@@ -135,29 +119,22 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Header onLogout={handleLogout} isDemoAccount={isDemoAccount} />
-
-      {isDemoAccount && (
-        <section className="demo-banner">
-          <strong>Conta teste</strong>
-          <span>Você pode visualizar o sistema, mas cadastros, edições, entradas e feiras estão bloqueados para demonstração.</span>
-        </section>
-      )}
+      <Header onLogout={handleLogout} />
 
       {page === 'dashboard' && (
         <Dashboard products={products} fairs={fairs} activeFair={activeFair} setPage={setPage} />
       )}
 
       {page === 'estoque' && (
-        <Estoque user={user} products={products} categories={categories} reload={loadData} setPage={setPage} readOnly={isDemoAccount} onBlockedAction={showDemoMessage} />
+        <Estoque user={user} products={products} categories={categories} reload={loadData} setPage={setPage} />
       )}
 
       {page === 'categorias' && (
-        <Categorias user={user} categories={categories} reload={loadData} readOnly={isDemoAccount} onBlockedAction={showDemoMessage} />
+        <Categorias user={user} categories={categories} reload={loadData} />
       )}
 
       {page === 'compras' && (
-        <Compras user={user} products={products} reload={loadData} readOnly={isDemoAccount} onBlockedAction={showDemoMessage} />
+        <Compras user={user} products={products} reload={loadData} />
       )}
 
       {page === 'feiras' && (
@@ -167,8 +144,6 @@ export default function App() {
           reload={loadData}
           setPage={setPage}
           setSelectedFairPlace={setSelectedFairPlace}
-          readOnly={isDemoAccount}
-          onBlockedAction={showDemoMessage}
         />
       )}
 
@@ -179,13 +154,11 @@ export default function App() {
           selectedFairPlace={selectedFairPlace}
           reload={loadData}
           setPage={setPage}
-          readOnly={isDemoAccount}
-          onBlockedAction={showDemoMessage}
         />
       )}
 
       {page === 'encerrar' && (
-        <EncerrarFeira activeFair={activeFair} reload={loadData} setPage={setPage} readOnly={isDemoAccount} onBlockedAction={showDemoMessage} />
+        <EncerrarFeira activeFair={activeFair} reload={loadData} setPage={setPage} />
       )}
 
       {page === 'historico' && (
