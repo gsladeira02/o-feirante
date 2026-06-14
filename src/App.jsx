@@ -22,6 +22,7 @@ import Feiras from './pages/Feiras'
 import ComecarFeira from './pages/ComecarFeira'
 import EncerrarFeira from './pages/EncerrarFeira'
 import Historico from './pages/Historico'
+import Inteligencia from './pages/Inteligencia'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -162,6 +163,10 @@ export default function App() {
 
       {page === 'historico' && (
         <Historico fairs={fairs} />
+      )}
+
+      {page === 'inteligencia' && (
+        <Inteligencia fairs={fairs} fairPlaces={fairPlaces} />
       )}
 
       <BottomNav page={page} setPage={setPage} />

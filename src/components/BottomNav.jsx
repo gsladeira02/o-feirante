@@ -1,11 +1,11 @@
-import { BarChart3, Boxes, History, MapPinned, Tags } from 'lucide-react'
+import { BarChart3, Boxes, Brain, History, MapPinned } from 'lucide-react'
 
 export default function BottomNav({ page, setPage }) {
   const items = [
     { id: 'dashboard', label: 'Início', icon: BarChart3 },
     { id: 'estoque', label: 'Estoque', icon: Boxes },
-    { id: 'categorias', label: 'Categorias', icon: Tags },
     { id: 'feiras', label: 'Feiras', icon: MapPinned },
+    { id: 'inteligencia', label: 'Análise', icon: Brain },
     { id: 'historico', label: 'Histórico', icon: History },
   ]
 

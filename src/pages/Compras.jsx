@@ -35,7 +35,7 @@ export default function Compras({ user, products, reload }) {
       setQuantity('')
       setTotalValue('')
       setSupplier('')
-      setMessage('Compra registrada.')
+      setMessage('Entrada registrada.')
       await reload()
     } catch (error) {
       setMessage(error.message)
@@ -44,7 +44,7 @@ export default function Compras({ user, products, reload }) {
 
   return (
     <main className="page">
-      <h2>Comprar mercadoria</h2>
+      <h2>Entrada de mercadoria</h2>
 
       <form className="form-card" onSubmit={submit}>
         <label>Produto</label>
@@ -53,17 +53,13 @@ export default function Compras({ user, products, reload }) {
           {products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}
         </select>
 
-        <label>Quantidade comprada</label>
+        <label>Quantidade recebida</label>
         <input min="0" type="number" step="0.01" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
 
-        <label>Valor total pago</label>
+        <label>Valor total da entrada</label>
         <input min="0" type="number" step="0.01" value={totalValue} onChange={(e) => setTotalValue(e.target.value)} required />
-
-        <label>Fornecedor</label>
-        <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Opcional" />
-
         {message && <p className="message">{message}</p>}
-        <button className="primary-btn">Registrar compra</button>
+        <button className="primary-btn">Registrar entrada</button>
       </form>
     </main>
   )

@@ -67,3 +67,23 @@ Inclui:
 - Edição de categorias.
 - Edição de feiras/locais.
 - Resumo antes de confirmar o encerramento da feira.
+
+
+## V3
+
+Inclui:
+- Dashboard avançado do mês.
+- Página de inteligência.
+- Produtos mais vendidos.
+- Produtos mais lucrativos.
+- Produtos com mais perdas.
+- Comparativo entre feiras por lucro médio.
+- Evolução mensal com gráfico simples.
+- Meta mensal de faturamento.
+- Sugestão automática do que levar para cada feira.
+- Entrada de mercadoria em vez de "comprar mercadoria".
+
+
+## Manual do cliente
+
+Incluído no projeto: `Manual_Cliente_O_Feirante_V3.pdf`.

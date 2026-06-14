@@ -1,16 +1,17 @@
 import { money } from '../utils/format'
+import { buildProductStats, getCurrentMonthTotals } from '../utils/analytics'
 
 export default function Dashboard({ products, fairs, activeFair, setPage }) {
-  const revenue = fairs.reduce((sum, fair) => sum + Number(fair.revenue_total || 0), 0)
-  const profit = fairs.reduce((sum, fair) => sum + Number(fair.profit_total || 0), 0)
-  const loss = fairs.reduce((sum, fair) => sum + Number(fair.loss_total || 0), 0)
+  const month = getCurrentMonthTotals(fairs)
+  const productStats = buildProductStats(fairs)
+  const topProduct = [...productStats].sort((a, b) => b.profit - a.profit)[0]
 
   return (
     <main className="page">
       <section className="hero">
-        <p>Resultado registrado</p>
-        <h2>{money(revenue)}</h2>
-        <span>Lucro estimado: {money(profit)}</span>
+        <p>Resultado do mês</p>
+        <h2>{money(month.revenue)}</h2>
+        <span>Lucro estimado: {money(month.profit)}</span>
       </section>
 
       {activeFair ? (
@@ -28,9 +29,20 @@ export default function Dashboard({ products, fairs, activeFair, setPage }) {
 
       <div className="stats-grid">
         <div className="stat"><small>Produtos</small><strong>{products.length}</strong></div>
-        <div className="stat"><small>Feiras feitas</small><strong>{fairs.length}</strong></div>
-        <div className="stat"><small>Perdas</small><strong>{money(loss)}</strong></div>
+        <div className="stat"><small>Feiras no mês</small><strong>{month.count}</strong></div>
+        <div className="stat"><small>Perdas</small><strong>{money(month.lossValue)}</strong></div>
       </div>
+
+      <section className="section">
+        <button className="intelligence-banner" onClick={() => setPage('inteligencia')}>
+          <strong>Inteligência da banca</strong>
+          <span>
+            {topProduct
+              ? `Produto mais lucrativo: ${topProduct.name} (${money(topProduct.profit)})`
+              : 'Veja produtos mais vendidos, lucro, perdas e sugestões.'}
+          </span>
+        </button>
+      </section>
 
       <section className="section">
         <h3>Ações rápidas</h3>
@@ -38,8 +50,9 @@ export default function Dashboard({ products, fairs, activeFair, setPage }) {
           <button onClick={() => setPage('estoque')}>Estoque</button>
           <button onClick={() => setPage('categorias')}>Categorias</button>
           <button onClick={() => setPage('feiras')}>Feiras</button>
-          <button onClick={() => setPage('compras')}>Compra</button>
+          <button onClick={() => setPage('compras')}>Entrada</button>
           <button onClick={() => setPage('historico')}>Histórico</button>
+          <button onClick={() => setPage('inteligencia')}>Inteligência</button>
         </div>
       </section>
     </main>
