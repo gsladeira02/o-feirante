@@ -87,3 +87,17 @@ Inclui:
 ## Manual do cliente
 
 Incluído no projeto: `Manual_Cliente_O_Feirante_V3.pdf`.
+
+
+## V3.1 - Conta teste bloqueada
+
+Esta versão reconhece usuários marcados em `public.user_access` com `read_only = true`.
+
+Quando uma conta teste tenta cadastrar, editar, excluir, registrar entrada de mercadoria, iniciar feira ou encerrar feira, o app exibe uma mensagem informando que é uma conta teste e bloqueia a ação.
+
+A conta teste usada na demonstração é:
+
+- E-mail: `teste@ofeirante.com`
+- UID: `4cfdc4be-5aab-480a-8d84-0c222bac0dd1`
+
+Se necessário, rode `supabase/migration-v3-1-demo.sql` no SQL Editor do Supabase.

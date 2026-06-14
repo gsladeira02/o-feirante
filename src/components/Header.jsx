@@ -1,6 +1,6 @@
 import { LogOut } from 'lucide-react'
 
-export default function Header({ onLogout }) {
+export default function Header({ onLogout, isDemoAccount }) {
   return (
     <header className="topbar">
       <div className="header-brand">
@@ -8,6 +8,7 @@ export default function Header({ onLogout }) {
         <div>
           <p className="eyebrow">O Feirante</p>
           <h1>Controle sua banca</h1>
+          {isDemoAccount && <span className="demo-pill">Conta teste</span>}
         </div>
       </div>
       <button className="icon-btn" onClick={onLogout} title="Sair">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { registerPurchase } from '../services/api'
 
-export default function Compras({ user, products, reload }) {
+export default function Compras({ user, products, reload, readOnly = false, onBlockedAction }) {
   const [productId, setProductId] = useState('')
   const [quantity, setQuantity] = useState('')
   const [totalValue, setTotalValue] = useState('')
@@ -11,6 +11,11 @@ export default function Compras({ user, products, reload }) {
   async function submit(event) {
     event.preventDefault()
     setMessage('')
+
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
+      return
+    }
 
     const product = products.find((item) => item.id === productId)
 
