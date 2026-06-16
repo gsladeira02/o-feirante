@@ -2,7 +2,7 @@ export function PrivacyPolicy() {
   return (
     <article className="legal-document">
       <h2>Política de Privacidade</h2>
-      <p className="legal-date">Última atualização: 14/06/2026</p>
+      <p className="legal-date">Última atualização: 16/06/2026</p>
 
       <p>Esta Política de Privacidade explica como o <strong>O Feirante</strong> coleta, utiliza, armazena e protege as informações dos usuários que acessam e utilizam a plataforma.</p>
 
@@ -10,14 +10,14 @@ export function PrivacyPolicy() {
       <p>O O Feirante é uma plataforma digital de gestão criada para auxiliar feirantes no controle de produtos, estoque, entrada de mercadoria, feiras, histórico de vendas, perdas e resultados da banca.</p>
 
       <h3>2. Dados coletados</h3>
-      <p>Para funcionamento da plataforma, o O Feirante pode coletar e armazenar nome, e-mail, nome da banca, cidade, produtos cadastrados, categorias, estoque, entradas de mercadoria, locais e dias de feira, itens levados para cada feira, quantidades vendidas, retornadas ou perdidas, histórico de faturamento, custos, lucro estimado e perdas.</p>
+      <p>Para funcionamento da plataforma e contratação dos planos, o O Feirante pode coletar e armazenar nome completo, e-mail, CPF, data de nascimento, celular, cidade, estado, nome da banca, CNPJ quando informado, plano escolhido, status do pagamento, produtos cadastrados, categorias, estoque, entradas de mercadoria, locais e dias de feira, itens levados para cada feira, quantidades vendidas, retornadas ou perdidas, histórico de faturamento, custos, lucro estimado e perdas.</p>
       <p>O O Feirante não solicita dados sensíveis, como informações de saúde, religião, opinião política, biometria ou documentos pessoais sensíveis.</p>
 
       <h3>3. Finalidade do uso dos dados</h3>
-      <p>Os dados são utilizados para permitir o acesso seguro à conta, organizar produtos e estoque, registrar entradas de mercadoria, controlar feiras, calcular resultados, exibir histórico e análises da banca, melhorar a experiência de uso e prestar suporte quando necessário.</p>
+      <p>Os dados são utilizados para permitir o cadastro e contratação do plano, gerar link de pagamento, liberar o acesso à conta, organizar produtos e estoque, registrar entradas de mercadoria, controlar feiras, calcular resultados, exibir histórico e análises da banca, melhorar a experiência de uso e prestar suporte quando necessário.</p>
 
       <h3>4. Compartilhamento de dados</h3>
-      <p>O O Feirante não vende dados dos usuários. Os dados podem ser armazenados ou processados por serviços de tecnologia necessários para o funcionamento da plataforma, como hospedagem, autenticação, banco de dados e infraestrutura.</p>
+      <p>O O Feirante não vende dados dos usuários. Os dados podem ser armazenados ou processados por serviços de tecnologia necessários para o funcionamento da plataforma, como hospedagem, autenticação, banco de dados, infraestrutura e gateway de pagamento.</p>
 
       <h3>5. Armazenamento e segurança</h3>
       <p>O O Feirante adota medidas técnicas e organizacionais para proteger os dados armazenados. O acesso à conta é protegido por login e senha, sendo responsabilidade do usuário manter suas credenciais em segurança.</p>
@@ -49,7 +49,7 @@ export function TermsOfUse() {
   return (
     <article className="legal-document">
       <h2>Termos de Uso</h2>
-      <p className="legal-date">Última atualização: 14/06/2026</p>
+      <p className="legal-date">Última atualização: 16/06/2026</p>
 
       <p>Estes Termos de Uso regulam o acesso e a utilização da plataforma <strong>O Feirante</strong>. Ao acessar ou utilizar o sistema, o usuário declara que leu, compreendeu e concorda com estes Termos.</p>
 
@@ -63,8 +63,8 @@ export function TermsOfUse() {
       <p>No primeiro acesso, o usuário poderá receber uma senha provisória. Por segurança, o sistema poderá solicitar a alteração da senha inicial antes da utilização completa da plataforma.</p>
 
       <h3>4. Planos e pagamento</h3>
-      <p>O acesso ao O Feirante pode ser condicionado à contratação de plano pago. Os planos disponíveis são: Mensal R$ 9,90, Trimestral R$ 24,90, Semestral R$ 44,90 e Anual R$ 79,90.</p>
-      <p>O não pagamento, atraso ou cancelamento do plano poderá resultar na suspensão, bloqueio ou encerramento do acesso à plataforma.</p>
+      <p>O acesso ao O Feirante pode ser condicionado à contratação de plano pago. Os planos disponíveis são: Mensal R$ 9,90, Trimestral R$ 24,90, Semestral R$ 44,90 e Anual R$ 79,90. O cadastro pode solicitar nome completo, e-mail, CPF, data de nascimento, celular, cidade, estado, nome da banca e CNPJ opcional para viabilizar identificação, pagamento e liberação do acesso.</p>
+      <p>O pagamento pode ser realizado por gateway externo. O não pagamento, atraso, cancelamento, contestação ou falha na confirmação do plano poderá resultar na não liberação, suspensão, bloqueio ou encerramento do acesso à plataforma.</p>
 
       <h3>5. Uso permitido</h3>
       <p>O usuário deve utilizar o O Feirante apenas para fins lícitos e relacionados à organização de sua banca, estoque, produtos, feiras e resultados.</p>

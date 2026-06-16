@@ -1,60 +1,52 @@
-# O Feirante V3.2
+# O Feirante V3.3
 
-Sistema de gestão para feirantes: estoque, entrada de mercadoria, feiras, histórico e inteligência da banca.
+Sistema de gestão para feirantes com estoque, entrada de mercadoria, feiras, histórico, inteligência da banca, conta demo bloqueada, termos/política e tela comercial com planos + checkout InfinitePay.
 
-## Novidades da V3.2
+## Novidades da V3.3
 
-- Links de **Termos de Uso** e **Política de Privacidade** na tela de login.
-- Textos legais dentro do próprio app, em janela de leitura.
-- Aviso de concordância no login.
-- Tela amigável para **conta inativa**.
-- Remoção do campo interno de fornecedor na entrada de mercadoria.
-- Migração SQL completa para reforçar bloqueio de conta demo e contas inativas.
-- Mantém bloqueio visual da conta teste com mensagem de demonstração.
+- Planos na tela inicial:
+  - Mensal: R$ 9,90
+  - Trimestral: R$ 24,90
+  - Semestral: R$ 44,90
+  - Anual: R$ 79,90
+- Fluxo de cadastro antes do pagamento.
+- Campos de cadastro:
+  - nome completo
+  - e-mail
+  - CPF
+  - data de nascimento
+  - celular
+  - cidade
+  - estado
+  - nome da banca
+  - CNPJ opcional
+- Integração com Checkout InfinitePay por link de pagamento.
+- Registros de interessados/assinaturas na tabela `customer_signups`.
+- Política de Privacidade atualizada para os novos dados.
+- Termos de Uso atualizados para pagamento e cadastro.
 
-## Conta demo
+## Variáveis de ambiente
 
-A conta demo conhecida é:
-
-- E-mail: `teste@ofeirante.com`
-- UID: `4cfdc4be-5aab-480a-8d84-0c222bac0dd1`
-
-Ela deve estar na tabela `user_access` com:
-
-- `read_only = true`
-- `is_active = true`
-
-## Subir no GitHub/Vercel
-
-Extraia o ZIP e envie para o repositório os arquivos de dentro da pasta `o-feirante-v3-2`, não a pasta inteira.
-
-Estrutura correta na raiz do GitHub:
-
-```txt
-package.json
-index.html
-vite.config.js
-README.md
-public/
-src/
-supabase/
-```
-
-## Variáveis de ambiente na Vercel
+Configure na Vercel:
 
 ```txt
 VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
-VITE_SUPABASE_ANON_KEY=sua_chave_publishable_ou_anon
+VITE_SUPABASE_ANON_KEY=SUA_CHAVE_PUBLICA
+INFINITEPAY_HANDLE=sua_infinite_tag_sem_o_sifrao
 ```
 
-Depois de alterar variáveis, faça redeploy.
+A `INFINITEPAY_HANDLE` é sua InfiniteTag no app InfinitePay, sem o símbolo `$`. Ela fica como variável server-side da Vercel e é usada pela função `/api/infinitepay-link`.
 
 ## Supabase
 
-Para reforçar as regras de acesso, rode no SQL Editor:
+Rode as migrations nesta ordem, conforme seu estado atual:
 
-```txt
-supabase/migration-v3-2-politicas-acesso.sql
-```
+1. `supabase/schema.sql` somente se o projeto estiver vazio.
+2. `supabase/migration-v2.sql` se ainda não tiver categorias/feiras por local.
+3. `supabase/migration-v3-2-politicas-acesso.sql` para políticas de acesso e demo.
+4. `supabase/migration-v3-3-planos-pagamento.sql` para cadastros comerciais e planos.
 
-Esse arquivo remove policies antigas, recria policies com controle de escrita e mantém a conta teste bloqueada para alterações.
+## Observação importante sobre liberação de acesso
+
+A V3.3 gera o link de pagamento e registra o cadastro do cliente como `pending`.
+Após confirmar o pagamento na InfinitePay, crie/libere a conta do cliente no Supabase manualmente, ou implemente posteriormente um webhook/automação para ativação automática.
