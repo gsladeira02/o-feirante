@@ -1,6 +1,6 @@
-import { BarChart3, Boxes, Brain, History, MapPinned } from 'lucide-react'
+import { BarChart3, Boxes, Brain, History, MapPinned, ShieldCheck } from 'lucide-react'
 
-export default function BottomNav({ page, setPage }) {
+export default function BottomNav({ page, setPage, isAdmin = false }) {
   const items = [
     { id: 'dashboard', label: 'Início', icon: BarChart3 },
     { id: 'estoque', label: 'Estoque', icon: Boxes },
@@ -8,6 +8,10 @@ export default function BottomNav({ page, setPage }) {
     { id: 'inteligencia', label: 'Análise', icon: Brain },
     { id: 'historico', label: 'Histórico', icon: History },
   ]
+
+  if (isAdmin) {
+    items.push({ id: 'admin', label: 'Admin', icon: ShieldCheck })
+  }
 
   return (
     <nav className="bottom-nav">

@@ -50,3 +50,30 @@ Rode as migrations nesta ordem, conforme seu estado atual:
 
 A V3.3 gera o link de pagamento e registra o cadastro do cliente como `pending`.
 Após confirmar o pagamento na InfinitePay, crie/libere a conta do cliente no Supabase manualmente, ou implemente posteriormente um webhook/automação para ativação automática.
+
+
+## V3.5 - Painel Admin privado
+
+Esta versão adiciona uma área administrativa visível apenas para usuários marcados como `is_admin = true` no Supabase.
+
+Recursos adicionados:
+
+- aba **Admin** aparece apenas para administradores;
+- lista de clientes cadastrados;
+- visualização de plano, status, vencimento e carência;
+- último acesso e quantidade de acessos;
+- cadastros recentes feitos na tela de planos;
+- ativar, bloquear, marcar como demo e alterar plano/vencimento;
+- registro automático de acesso ao app.
+
+Depois de subir esta versão, rode no Supabase:
+
+```txt
+supabase/migration-v3-5-painel-admin.sql
+```
+
+Se o seu usuário admin não for `gabriel.ladeira2003@gmail.com`, rode também:
+
+```sql
+update public.profiles set is_admin = true where id = 'SEU_UID_AQUI';
+```

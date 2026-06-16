@@ -9,6 +9,7 @@ import {
   getOrCreateProfile,
   getProducts,
   getUserAccess,
+  recordAppAccess,
   signOut,
 } from './services/api'
 
@@ -25,6 +26,7 @@ import ComecarFeira from './pages/ComecarFeira'
 import EncerrarFeira from './pages/EncerrarFeira'
 import Historico from './pages/Historico'
 import Inteligencia from './pages/Inteligencia'
+import Admin from './pages/Admin'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -81,6 +83,7 @@ export default function App() {
 
       if (data.session?.user) {
         await loadData(data.session.user)
+        recordAppAccess().catch(() => {})
       }
 
       setLoading(false)
@@ -116,10 +119,12 @@ export default function App() {
     return <Login onLogin={(newSession) => {
       setSession(newSession)
       loadData(newSession.user)
+      recordAppAccess().catch(() => {})
     }} />
   }
 
   const isDemoAccount = Boolean(access?.read_only)
+  const isAdmin = Boolean(profile?.is_admin)
   const graceUntil = access?.grace_until ? new Date(access.grace_until) : null
   const periodEnd = access?.current_period_end ? new Date(access.current_period_end) : null
   const isExpiredByDate = graceUntil ? graceUntil.getTime() < Date.now() : false
@@ -235,7 +240,11 @@ export default function App() {
         <Inteligencia fairs={fairs} fairPlaces={fairPlaces} />
       )}
 
-      <BottomNav page={page} setPage={setPage} />
+      {page === 'admin' && isAdmin && (
+        <Admin />
+      )}
+
+      <BottomNav page={page} setPage={setPage} isAdmin={isAdmin} />
     </div>
   )
 }

@@ -372,3 +372,41 @@ export async function updateProduct(product) {
 
   if (error) throw error
 }
+
+export async function recordAppAccess() {
+  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : null
+  const { error } = await supabase.rpc('record_app_access', { client_user_agent: userAgent })
+
+  // Se a migration V3.5 ainda não foi rodada, o app continua funcionando normalmente.
+  if (error?.code === '42883' || error?.message?.includes('record_app_access')) return
+  if (error) throw error
+}
+
+export async function adminListClients() {
+  const { data, error } = await supabase.rpc('admin_list_clients')
+  if (error) throw error
+  return data || []
+}
+
+export async function adminUpdateClientAccess(payload) {
+  const { error } = await supabase.rpc('admin_update_client_access', {
+    target_user_id: payload.user_id,
+    new_is_active: payload.is_active,
+    new_read_only: payload.read_only,
+    new_subscription_status: payload.subscription_status,
+    new_plan_id: payload.plan_id || null,
+    new_plan_name: payload.plan_name || null,
+    new_billing_interval_months: payload.billing_interval_months || null,
+    new_current_period_end: payload.current_period_end || null,
+    new_label: payload.label || null,
+  })
+
+  if (error) throw error
+}
+
+export async function adminListSignups() {
+  const { data, error } = await supabase.rpc('admin_list_signups')
+  if (error?.code === '42883' || error?.message?.includes('admin_list_signups')) return []
+  if (error) throw error
+  return data || []
+}
