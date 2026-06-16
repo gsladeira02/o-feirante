@@ -100,6 +100,7 @@ export default function Estoque({ user, products, categories, reload, setPage, r
 
   async function submit(event) {
     event.preventDefault()
+    const formElement = event.currentTarget
     setMessage('')
 
     if (readOnly) {
@@ -107,7 +108,7 @@ export default function Estoque({ user, products, categories, reload, setPage, r
       return
     }
 
-    const formData = productFromForm(event.currentTarget)
+    const formData = productFromForm(formElement)
     const errorMessage = validateProduct(formData)
     if (errorMessage) {
       setMessage(errorMessage)
@@ -125,7 +126,7 @@ export default function Estoque({ user, products, categories, reload, setPage, r
         sale_price: parseDecimal(formData.sale_price),
       })
 
-      event.currentTarget.reset()
+      formElement.reset()
       setFormKey((current) => current + 1)
       await reload()
     } catch (error) {
@@ -153,6 +154,7 @@ export default function Estoque({ user, products, categories, reload, setPage, r
 
   async function saveEdit(event) {
     event.preventDefault()
+    const formElement = event.currentTarget
     setMessage('')
 
     if (readOnly) {
@@ -160,7 +162,7 @@ export default function Estoque({ user, products, categories, reload, setPage, r
       return
     }
 
-    const formData = productFromForm(event.currentTarget)
+    const formData = productFromForm(formElement)
     const errorMessage = validateProduct(formData)
     if (errorMessage) {
       setMessage(errorMessage)

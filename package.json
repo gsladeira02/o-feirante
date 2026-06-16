@@ -1,7 +1,7 @@
 {
-  "name": "o-feirante-v3-5-3-produtos-teclado",
+  "name": "o-feirante-v3-5-4-produtos-reset",
   "private": true,
-  "version": "3.5.3",
+  "version": "3.5.4",
   "type": "module",
   "scripts": {
     "dev": "vite",

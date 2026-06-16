@@ -1,98 +1,13 @@
-# O Feirante V3.5.3
+# O Feirante V3.5.4
 
-# O Feirante V3.3
+Correção emergencial do cadastro de produtos.
 
-Sistema de gestão para feirantes com estoque, entrada de mercadoria, feiras, histórico, inteligência da banca, conta demo bloqueada, termos/política e tela comercial com planos + checkout InfinitePay.
+## Correção
 
-## Novidades da V3.3
+- Corrigido erro: `Cannot read properties of null (reading 'reset')` ao salvar produto.
+- O formulário agora guarda a referência antes da operação assíncrona, evitando que o React zere `event.currentTarget` após o cadastro.
+- Mantém as correções anteriores de teclado no celular e painel admin.
 
-- Planos na tela inicial:
-  - Mensal: R$ 9,90
-  - Trimestral: R$ 24,90
-  - Semestral: R$ 44,90
-  - Anual: R$ 79,90
-- Fluxo de cadastro antes do pagamento.
-- Campos de cadastro:
-  - nome completo
-  - e-mail
-  - CPF
-  - data de nascimento
-  - celular
-  - cidade
-  - estado
-  - nome da banca
-  - CNPJ opcional
-- Integração com Checkout InfinitePay por link de pagamento.
-- Registros de interessados/assinaturas na tabela `customer_signups`.
-- Política de Privacidade atualizada para os novos dados.
-- Termos de Uso atualizados para pagamento e cadastro.
+## Deploy
 
-## Variáveis de ambiente
-
-Configure na Vercel:
-
-```txt
-VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
-VITE_SUPABASE_ANON_KEY=SUA_CHAVE_PUBLICA
-VITE_INFINITEPAY_HANDLE=sua_infinite_tag_sem_o_sifrao
-```
-
-A `VITE_INFINITEPAY_HANDLE` é sua InfiniteTag no app InfinitePay, sem o símbolo `$`.
-
-## Supabase
-
-Rode as migrations nesta ordem, conforme seu estado atual:
-
-1. `supabase/schema.sql` somente se o projeto estiver vazio.
-2. `supabase/migration-v2.sql` se ainda não tiver categorias/feiras por local.
-3. `supabase/migration-v3-2-politicas-acesso.sql` para políticas de acesso e demo.
-4. `supabase/migration-v3-3-planos-pagamento.sql` para cadastros comerciais e planos.
-
-## Observação importante sobre liberação de acesso
-
-A V3.3 gera o link de pagamento e registra o cadastro do cliente como `pending`.
-Após confirmar o pagamento na InfinitePay, crie/libere a conta do cliente no Supabase manualmente, ou implemente posteriormente um webhook/automação para ativação automática.
-
-
-## V3.5 - Painel Admin privado
-
-Esta versão adiciona uma área administrativa visível apenas para usuários marcados como `is_admin = true` no Supabase.
-
-Recursos adicionados:
-
-- aba **Admin** aparece apenas para administradores;
-- lista de clientes cadastrados;
-- visualização de plano, status, vencimento e carência;
-- último acesso e quantidade de acessos;
-- cadastros recentes feitos na tela de planos;
-- ativar, bloquear, marcar como demo e alterar plano/vencimento;
-- registro automático de acesso ao app.
-
-Depois de subir esta versão, rode no Supabase:
-
-```txt
-supabase/migration-v3-5-painel-admin.sql
-```
-
-Se o seu usuário admin não for `gabriel.ladeira2003@gmail.com`, rode também:
-
-```sql
-update public.profiles set is_admin = true where id = 'SEU_UID_AQUI';
-```
-
-
-## V3.5.3 - Correção de teclado no celular
-
-- Corrigido problema em que o teclado do celular abria e fechava ao digitar vírgula em campos numéricos.
-- Campos de quantidade, custo, venda, entrada, iniciar feira, encerrar feira e meta mensal agora aceitam vírgula decimal.
-- O componente de campos do produto foi estabilizado para não remontar os inputs a cada digitação.
-
-
-## Correção V3.5.3
-
-Corrige o teclado fechando ao digitar letras nos campos de texto das feiras. O componente dos campos de feira foi estabilizado fora do componente principal para evitar remount a cada tecla.
-
-
-## V3.5.3
-
-Correção específica no cadastro/edição de produtos: os campos de produto foram convertidos para entradas estáveis sem atualização de estado a cada tecla, evitando que o teclado feche no celular durante a digitação.
+Suba os arquivos da pasta na raiz do GitHub, não a pasta inteira.
