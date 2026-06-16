@@ -107,7 +107,7 @@ export default function App() {
     setFairs([])
     setActiveFair(null)
     setSelectedFairPlace(null)
-    setAccess({ read_only: false, is_active: true, label: null })
+    setAccess({ read_only: false, is_active: true, label: null, subscription_status: 'manual' })
   }
 
   if (loading) return <div className="loading">Carregando...</div>
@@ -120,7 +120,19 @@ export default function App() {
   }
 
   const isDemoAccount = Boolean(access?.read_only)
-  const isInactiveAccount = access?.is_active === false
+  const graceUntil = access?.grace_until ? new Date(access.grace_until) : null
+  const periodEnd = access?.current_period_end ? new Date(access.current_period_end) : null
+  const isExpiredByDate = graceUntil ? graceUntil.getTime() < Date.now() : false
+  const isBlockedBySubscription = ['canceled', 'expired'].includes(access?.subscription_status) || (access?.subscription_status === 'past_due' && isExpiredByDate)
+  const isInactiveAccount = access?.is_active === false || isBlockedBySubscription
+  const isInGracePeriod = access?.subscription_status === 'past_due' && graceUntil && graceUntil.getTime() >= Date.now()
+
+  function formatDate(dateLike) {
+    if (!dateLike) return ''
+    const date = new Date(dateLike)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toLocaleDateString('pt-BR')
+  }
 
   function showDemoMessage() {
     window.alert(DEMO_ACCOUNT_MESSAGE)
@@ -133,7 +145,7 @@ export default function App() {
         <section className="brand-card">
           <div className="logo-mark"><img src="/logo.svg" alt="Logo O Feirante" /></div>
           <h1>Conta inativa</h1>
-          <p>Seu acesso está temporariamente bloqueado. Entre em contato pelo canal oficial do O Feirante para regularizar ou reativar sua assinatura.</p>
+          <p>{isBlockedBySubscription ? 'Sua assinatura está vencida. O acesso é bloqueado após 3 dias do vencimento. Regularize o pagamento para voltar a usar o sistema.' : 'Seu acesso está temporariamente bloqueado. Entre em contato pelo canal oficial do O Feirante para regularizar ou reativar sua assinatura.'}</p>
         </section>
         <button className="primary-btn" onClick={handleLogout}>Sair</button>
       </main>
@@ -155,6 +167,19 @@ export default function App() {
         <section className="demo-banner">
           <strong>Conta teste</strong>
           <span>Você pode visualizar o sistema, mas cadastros, edições, entradas e feiras estão bloqueados para demonstração.</span>
+        </section>
+      )}
+
+      {!isDemoAccount && (access?.plan_name || access?.current_period_end || isInGracePeriod) && (
+        <section className={`subscription-banner ${isInGracePeriod ? 'warning' : ''}`}>
+          <strong>{access?.plan_name ? `Plano ${access.plan_name}` : 'Assinatura'}</strong>
+          <span>
+            {isInGracePeriod
+              ? `Pagamento em atraso. Regularize até ${formatDate(access.grace_until)} para evitar bloqueio.`
+              : periodEnd
+                ? `Acesso ativo até ${formatDate(access.current_period_end)}.`
+                : 'Acesso ativo.'}
+          </span>
         </section>
       )}
 

@@ -5,16 +5,16 @@ export const DEMO_ACCOUNT_MESSAGE = 'Esta é uma conta teste. As ações de cada
 export async function getUserAccess(userId) {
   const { data, error } = await supabase
     .from('user_access')
-    .select('read_only, is_active, label')
+    .select('read_only, is_active, label, plan_id, plan_name, billing_interval_months, subscription_status, current_period_start, current_period_end, grace_until, last_payment_at, infinitepay_subscription_id')
     .eq('user_id', userId)
     .maybeSingle()
 
   if (error?.code === '42P01' || error?.code === 'PGRST205' || error?.message?.includes('user_access')) {
-    return { read_only: false, is_active: true, label: null }
+    return { read_only: false, is_active: true, label: null, subscription_status: 'manual' }
   }
 
   if (error) throw error
-  return data || { read_only: false, is_active: true, label: null }
+  return data || { read_only: false, is_active: true, label: null, subscription_status: 'manual' }
 }
 
 async function ensureCanWrite() {
@@ -26,6 +26,13 @@ async function ensureCanWrite() {
 
   if (access.is_active === false) {
     throw new Error('Sua conta está inativa. Entre em contato para regularizar o acesso.')
+  }
+
+  if (access.subscription_status === 'past_due' || access.subscription_status === 'expired' || access.subscription_status === 'canceled') {
+    const graceUntil = access.grace_until ? new Date(access.grace_until) : null
+    if (!graceUntil || graceUntil.getTime() < Date.now()) {
+      throw new Error('Sua assinatura está vencida. Regularize o pagamento para continuar usando o sistema.')
+    }
   }
 
   if (access.read_only) {

@@ -3,10 +3,10 @@ import { supabase, hasSupabaseConfig } from '../supabase'
 import { PrivacyPolicy, TermsOfUse } from '../components/LegalDocuments'
 
 const PLANS = [
-  { id: 'mensal', name: 'Mensal', priceLabel: 'R$ 9,90', amountCents: 990, note: 'Ideal para começar' },
-  { id: 'trimestral', name: 'Trimestral', priceLabel: 'R$ 24,90', amountCents: 2490, note: 'Economize no trimestre' },
-  { id: 'semestral', name: 'Semestral', priceLabel: 'R$ 44,90', amountCents: 4490, note: 'Mais controle por menos' },
-  { id: 'anual', name: 'Anual', priceLabel: 'R$ 79,90', amountCents: 7990, note: 'Melhor custo-benefício', featured: true },
+  { id: 'mensal', name: 'Mensal', priceLabel: 'R$ 9,90', amountCents: 990, intervalMonths: 1, recurrenceLabel: 'Cobrança mensal', note: 'Ideal para começar' },
+  { id: 'trimestral', name: 'Trimestral', priceLabel: 'R$ 24,90', amountCents: 2490, intervalMonths: 3, recurrenceLabel: 'Cobrança a cada 3 meses', note: 'Economize no trimestre' },
+  { id: 'semestral', name: 'Semestral', priceLabel: 'R$ 44,90', amountCents: 4490, intervalMonths: 6, recurrenceLabel: 'Cobrança a cada 6 meses', note: 'Mais controle por menos' },
+  { id: 'anual', name: 'Anual', priceLabel: 'R$ 79,90', amountCents: 7990, intervalMonths: 12, recurrenceLabel: 'Cobrança anual', note: 'Melhor custo-benefício', featured: true },
 ]
 
 const INITIAL_SIGNUP = {
@@ -126,6 +126,7 @@ export default function Login({ onLogin }) {
       plan_id: selectedPlan.id,
       plan_name: selectedPlan.name,
       amount_cents: selectedPlan.amountCents,
+      billing_interval_months: selectedPlan.intervalMonths,
       order_nsu: orderNsu,
       payment_status: 'pending',
     }
@@ -147,7 +148,7 @@ export default function Login({ onLogin }) {
             {
               quantity: 1,
               price: selectedPlan.amountCents,
-              description: `O Feirante - Plano ${selectedPlan.name}`,
+              description: `O Feirante - Assinatura ${selectedPlan.name} (${selectedPlan.recurrenceLabel})`,
             },
           ],
         }),
@@ -210,6 +211,7 @@ export default function Login({ onLogin }) {
               {plan.featured && <small>Recomendado</small>}
               <strong>{plan.name}</strong>
               <b>{plan.priceLabel}</b>
+              <em>{plan.recurrenceLabel}</em>
               <span>{plan.note}</span>
             </button>
           ))}
@@ -221,7 +223,7 @@ export default function Login({ onLogin }) {
           <div className="form-title-row">
             <div>
               <h2>Assinar plano {selectedPlan.name}</h2>
-              <p>{selectedPlan.priceLabel}</p>
+              <p>{selectedPlan.priceLabel} · {selectedPlan.recurrenceLabel}</p>
             </div>
             <button type="button" className="mini-btn" onClick={() => setMode('login')}>Já tenho acesso</button>
           </div>
@@ -266,7 +268,7 @@ export default function Login({ onLogin }) {
           {signupMessage && <p className="message">{signupMessage}</p>}
 
           <button className="primary-btn" disabled={signupLoading}>{signupLoading ? 'Gerando pagamento...' : 'Ir para pagamento'}</button>
-          <p className="access-note">Após a confirmação do pagamento, o acesso será liberado pelo administrador.</p>
+          <p className="access-note">Após a confirmação do pagamento, o acesso será liberado. O sistema identifica seu plano e bloqueia automaticamente após 3 dias do vencimento em caso de não pagamento.</p>
           <p className="legal-note">
             Ao assinar, você concorda com os{' '}
             <button type="button" onClick={() => setLegalView('terms')}>Termos de Uso</button>

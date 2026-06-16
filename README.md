@@ -1,52 +1,99 @@
-# O Feirante V3.3
+# O Feirante V3.4
 
-Sistema de gestão para feirantes com estoque, entrada de mercadoria, feiras, histórico, inteligência da banca, conta demo bloqueada, termos/política e tela comercial com planos + checkout InfinitePay.
+Versão com planos, cadastro comercial, integração com InfinitePay, controle de assinatura e bloqueio automático após 3 dias do vencimento.
 
-## Novidades da V3.3
+## Novidades da V3.4
 
-- Planos na tela inicial:
-  - Mensal: R$ 9,90
-  - Trimestral: R$ 24,90
-  - Semestral: R$ 44,90
-  - Anual: R$ 79,90
-- Fluxo de cadastro antes do pagamento.
-- Campos de cadastro:
-  - nome completo
-  - e-mail
-  - CPF
-  - data de nascimento
-  - celular
-  - cidade
-  - estado
-  - nome da banca
-  - CNPJ opcional
-- Integração com Checkout InfinitePay por link de pagamento.
-- Registros de interessados/assinaturas na tabela `customer_signups`.
-- Política de Privacidade atualizada para os novos dados.
-- Termos de Uso atualizados para pagamento e cadastro.
-
-## Variáveis de ambiente
-
-Configure na Vercel:
-
-```txt
-VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
-VITE_SUPABASE_ANON_KEY=SUA_CHAVE_PUBLICA
-INFINITEPAY_HANDLE=sua_infinite_tag_sem_o_sifrao
-```
-
-A `INFINITEPAY_HANDLE` é sua InfiniteTag no app InfinitePay, sem o símbolo `$`. Ela fica como variável server-side da Vercel e é usada pela função `/api/infinitepay-link`.
+- Planos com recorrência identificada:
+  - Mensal: 1 mês
+  - Trimestral: 3 meses
+  - Semestral: 6 meses
+  - Anual: 12 meses
+- Cadastro comercial com nome completo, CPF, nascimento, celular, cidade, estado, nome da banca e CNPJ opcional.
+- Armazena `billing_interval_months` para identificar a duração do plano.
+- Campos de assinatura em `user_access`:
+  - `plan_id`
+  - `plan_name`
+  - `billing_interval_months`
+  - `subscription_status`
+  - `current_period_start`
+  - `current_period_end`
+  - `grace_until`
+  - `last_payment_at`
+  - `infinitepay_subscription_id`
+- Bloqueio automático no banco quando a assinatura passa do vencimento + 3 dias.
+- Faixa no app informando plano ativo ou período de carência.
+- Tela de conta bloqueada para assinatura vencida.
 
 ## Supabase
 
-Rode as migrations nesta ordem, conforme seu estado atual:
+Após subir os arquivos, rode no SQL Editor:
 
-1. `supabase/schema.sql` somente se o projeto estiver vazio.
-2. `supabase/migration-v2.sql` se ainda não tiver categorias/feiras por local.
-3. `supabase/migration-v3-2-politicas-acesso.sql` para políticas de acesso e demo.
-4. `supabase/migration-v3-3-planos-pagamento.sql` para cadastros comerciais e planos.
+```txt
+supabase/migration-v3-4-assinaturas-vencimento.sql
+```
 
-## Observação importante sobre liberação de acesso
+## Vercel
 
-A V3.3 gera o link de pagamento e registra o cadastro do cliente como `pending`.
-Após confirmar o pagamento na InfinitePay, crie/libere a conta do cliente no Supabase manualmente, ou implemente posteriormente um webhook/automação para ativação automática.
+Configure:
+
+```txt
+VITE_SUPABASE_URL=https://SEU_PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_chave_publica
+INFINITEPAY_HANDLE=sua_infinite_tag_sem_o_sifrao
+```
+
+## Observação sobre InfinitePay
+
+Esta versão já prepara o sistema para controle recorrente por plano e bloqueio por vencimento. A confirmação de pagamento/renovação deve atualizar a tabela `user_access`, manualmente pelo painel ou por webhook/API quando a recorrência da InfinitePay estiver configurada.
+
+Regra de acesso:
+
+```txt
+current_period_end = data de vencimento
+ grace_until = current_period_end + 3 dias
+Depois de grace_until, o sistema bloqueia o acesso.
+```
+
+## Exemplo de ativação manual de cliente
+
+```sql
+insert into public.user_access (
+  user_id,
+  read_only,
+  is_active,
+  plan_id,
+  plan_name,
+  billing_interval_months,
+  subscription_status,
+  current_period_start,
+  current_period_end,
+  grace_until,
+  last_payment_at
+)
+values (
+  'UID_DO_CLIENTE',
+  false,
+  true,
+  'mensal',
+  'Mensal',
+  1,
+  'active',
+  now(),
+  now() + interval '1 month',
+  now() + interval '1 month' + interval '3 days',
+  now()
+)
+on conflict (user_id) do update set
+  read_only = false,
+  is_active = true,
+  plan_id = excluded.plan_id,
+  plan_name = excluded.plan_name,
+  billing_interval_months = excluded.billing_interval_months,
+  subscription_status = excluded.subscription_status,
+  current_period_start = excluded.current_period_start,
+  current_period_end = excluded.current_period_end,
+  grace_until = excluded.grace_until,
+  last_payment_at = excluded.last_payment_at,
+  updated_at = now();
+```
