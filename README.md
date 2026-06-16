@@ -1,3 +1,5 @@
+# O Feirante V3.5.2
+
 # O Feirante V3.3
 
 Sistema de gestão para feirantes com estoque, entrada de mercadoria, feiras, histórico, inteligência da banca, conta demo bloqueada, termos/política e tela comercial com planos + checkout InfinitePay.
@@ -77,3 +79,15 @@ Se o seu usuário admin não for `gabriel.ladeira2003@gmail.com`, rode também:
 ```sql
 update public.profiles set is_admin = true where id = 'SEU_UID_AQUI';
 ```
+
+
+## V3.5.2 - Correção de teclado no celular
+
+- Corrigido problema em que o teclado do celular abria e fechava ao digitar vírgula em campos numéricos.
+- Campos de quantidade, custo, venda, entrada, iniciar feira, encerrar feira e meta mensal agora aceitam vírgula decimal.
+- O componente de campos do produto foi estabilizado para não remontar os inputs a cada digitação.
+
+
+## Correção V3.5.2
+
+Corrige o teclado fechando ao digitar letras nos campos de texto das feiras. O componente dos campos de feira foi estabilizado fora do componente principal para evitar remount a cada tecla.

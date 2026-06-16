@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { closeFair } from '../services/api'
 import { money, qty } from '../utils/format'
+import { decimalInputProps, parseDecimal } from '../utils/number'
 
 export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = false, onBlockedAction }) {
   const [items, setItems] = useState((activeFair?.fair_items || []).map((item) => ({
@@ -13,14 +14,14 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
 
   const totals = useMemo(() => {
     return items.reduce((acc, item) => {
-      const taken = Number(item.quantity_taken || 0)
-      const returned = Number(item.quantity_returned || 0)
-      const lost = Number(item.quantity_lost || 0)
+      const taken = parseDecimal(item.quantity_taken)
+      const returned = parseDecimal(item.quantity_returned)
+      const lost = parseDecimal(item.quantity_lost)
       const sold = Math.max(taken - returned - lost, 0)
-      const revenue = sold * Number(item.sale_price_at_time || 0)
-      const cost = sold * Number(item.cost_at_time || 0)
+      const revenue = sold * parseDecimal(item.sale_price_at_time)
+      const cost = sold * parseDecimal(item.cost_at_time)
       const profit = revenue - cost
-      const lossValue = lost * Number(item.cost_at_time || 0)
+      const lossValue = lost * parseDecimal(item.cost_at_time)
 
       acc.sold += sold
       acc.returned += returned
@@ -45,14 +46,14 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
 
   function update(id, field, value) {
     setShowSummary(false)
-    setItems(items.map((item) => item.id === id ? { ...item, [field]: value } : item))
+    setItems((current) => current.map((item) => item.id === id ? { ...item, [field]: value } : item))
   }
 
   function validateClosing() {
     for (const item of items) {
-      const returned = Number(item.quantity_returned || 0)
-      const lost = Number(item.quantity_lost || 0)
-      const taken = Number(item.quantity_taken || 0)
+      const returned = parseDecimal(item.quantity_returned)
+      const lost = parseDecimal(item.quantity_lost)
+      const taken = parseDecimal(item.quantity_taken)
 
       if (returned < 0) return `A quantidade que voltou de ${item.product_name} não pode ser negativa.`
       if (lost < 0) return `A perda de ${item.product_name} não pode ser negativa.`
@@ -106,9 +107,9 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
       <form onSubmit={preview}>
         <section className="list">
           {items.map((item) => {
-            const taken = Number(item.quantity_taken || 0)
-            const returned = Number(item.quantity_returned || 0)
-            const lost = Number(item.quantity_lost || 0)
+            const taken = parseDecimal(item.quantity_taken)
+            const returned = parseDecimal(item.quantity_returned)
+            const lost = parseDecimal(item.quantity_lost)
             const sold = Math.max(taken - returned - lost, 0)
 
             return (
@@ -121,11 +122,11 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
                 <div className="row">
                   <div>
                     <label>Voltou</label>
-                    <input min="0" type="number" step="0.01" value={item.quantity_returned} onChange={(e) => update(item.id, 'quantity_returned', e.target.value)} />
+                    <input {...decimalInputProps({ min: '0', value: item.quantity_returned, onChange: (e) => update(item.id, 'quantity_returned', e.target.value) })} />
                   </div>
                   <div>
                     <label>Perdeu</label>
-                    <input min="0" type="number" step="0.01" value={item.quantity_lost} onChange={(e) => update(item.id, 'quantity_lost', e.target.value)} />
+                    <input {...decimalInputProps({ min: '0', value: item.quantity_lost, onChange: (e) => update(item.id, 'quantity_lost', e.target.value) })} />
                   </div>
                 </div>
 

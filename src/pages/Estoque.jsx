@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createProduct, deleteProduct, updateProduct } from '../services/api'
 import { money, qty } from '../utils/format'
+import { decimalInputProps, parseDecimal } from '../utils/number'
 
 const emptyForm = {
   name: '',
@@ -11,6 +12,44 @@ const emptyForm = {
   sale_price: '',
 }
 
+function ProductFields({ data, setData, categories }) {
+  return (
+    <>
+      <label>Produto</label>
+      <input value={data.name} onChange={(e) => setData((current) => ({ ...current, name: e.target.value }))} placeholder="Banana" required />
+
+      <label>Categoria</label>
+      <select value={data.category_id} onChange={(e) => setData((current) => ({ ...current, category_id: e.target.value }))}>
+        <option value="">Sem categoria</option>
+        {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+      </select>
+
+      <label>Unidade</label>
+      <select value={data.unit} onChange={(e) => setData((current) => ({ ...current, unit: e.target.value }))}>
+        <option value="kg">kg</option>
+        <option value="un">unidade</option>
+        <option value="dz">dúzia</option>
+        <option value="cx">caixa</option>
+        <option value="maço">maço</option>
+      </select>
+
+      <div className="row">
+        <div>
+          <label>Quantidade</label>
+          <input {...decimalInputProps({ min: '0', value: data.stock, onChange: (e) => setData((current) => ({ ...current, stock: e.target.value })) })} />
+        </div>
+        <div>
+          <label>Preço de venda</label>
+          <input {...decimalInputProps({ min: '0', value: data.sale_price, onChange: (e) => setData((current) => ({ ...current, sale_price: e.target.value })) })} />
+        </div>
+      </div>
+
+      <label>Preço de custo</label>
+      <input {...decimalInputProps({ min: '0', value: data.average_cost, onChange: (e) => setData((current) => ({ ...current, average_cost: e.target.value })) })} />
+    </>
+  )
+}
+
 export default function Estoque({ user, products, categories, reload, setPage, readOnly = false, onBlockedAction }) {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
@@ -19,9 +58,9 @@ export default function Estoque({ user, products, categories, reload, setPage, r
 
   function validateProduct(data) {
     if (!data.name.trim()) return 'Informe o nome do produto.'
-    if (Number(data.stock || 0) < 0) return 'A quantidade inicial não pode ser negativa.'
-    if (Number(data.average_cost || 0) < 0) return 'O preço de custo não pode ser negativo.'
-    if (Number(data.sale_price || 0) < 0) return 'O preço de venda não pode ser negativo.'
+    if (parseDecimal(data.stock) < 0) return 'A quantidade inicial não pode ser negativa.'
+    if (parseDecimal(data.average_cost) < 0) return 'O preço de custo não pode ser negativo.'
+    if (parseDecimal(data.sale_price) < 0) return 'O preço de venda não pode ser negativo.'
     return ''
   }
 
@@ -46,9 +85,9 @@ export default function Estoque({ user, products, categories, reload, setPage, r
         category_id: form.category_id || null,
         name: form.name.trim(),
         unit: form.unit,
-        stock: Number(form.stock || 0),
-        average_cost: Number(form.average_cost || 0),
-        sale_price: Number(form.sale_price || 0),
+        stock: parseDecimal(form.stock),
+        average_cost: parseDecimal(form.average_cost),
+        sale_price: parseDecimal(form.sale_price),
       })
 
       setForm(emptyForm)
@@ -123,44 +162,6 @@ export default function Estoque({ user, products, categories, reload, setPage, r
     }
   }
 
-  function ProductFields({ data, setData }) {
-    return (
-      <>
-        <label>Produto</label>
-        <input value={data.name} onChange={(e) => setData({ ...data, name: e.target.value })} placeholder="Banana" required />
-
-        <label>Categoria</label>
-        <select value={data.category_id} onChange={(e) => setData({ ...data, category_id: e.target.value })}>
-          <option value="">Sem categoria</option>
-          {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-        </select>
-
-        <label>Unidade</label>
-        <select value={data.unit} onChange={(e) => setData({ ...data, unit: e.target.value })}>
-          <option value="kg">kg</option>
-          <option value="un">unidade</option>
-          <option value="dz">dúzia</option>
-          <option value="cx">caixa</option>
-          <option value="maço">maço</option>
-        </select>
-
-        <div className="row">
-          <div>
-            <label>Quantidade</label>
-            <input min="0" type="number" step="0.01" value={data.stock} onChange={(e) => setData({ ...data, stock: e.target.value })} />
-          </div>
-          <div>
-            <label>Preço de venda</label>
-            <input min="0" type="number" step="0.01" value={data.sale_price} onChange={(e) => setData({ ...data, sale_price: e.target.value })} />
-          </div>
-        </div>
-
-        <label>Preço de custo</label>
-        <input min="0" type="number" step="0.01" value={data.average_cost} onChange={(e) => setData({ ...data, average_cost: e.target.value })} />
-      </>
-    )
-  }
-
   return (
     <main className="page">
       <h2>Estoque</h2>
@@ -168,7 +169,7 @@ export default function Estoque({ user, products, categories, reload, setPage, r
       <form className="form-card compact" onSubmit={submit}>
         <h3>Novo produto</h3>
 
-        <ProductFields data={form} setData={setForm} />
+        <ProductFields data={form} setData={setForm} categories={categories} />
 
         {!categories.length && (
           <button type="button" className="secondary-btn" onClick={() => setPage('categorias')}>Criar primeira categoria</button>
@@ -183,7 +184,7 @@ export default function Estoque({ user, products, categories, reload, setPage, r
           <article className="item-card editable-card" key={product.id}>
             {editingId === product.id ? (
               <form className="inline-edit wide" onSubmit={saveEdit}>
-                <ProductFields data={editForm} setData={setEditForm} />
+                <ProductFields data={editForm} setData={setEditForm} categories={categories} />
                 <div className="inline-actions">
                   <button className="mini-filled" type="submit">Salvar</button>
                   <button className="mini-btn" type="button" onClick={() => setEditingId(null)}>Cancelar</button>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { registerPurchase } from '../services/api'
+import { decimalInputProps, parseDecimal } from '../utils/number'
 
 export default function Compras({ user, products, reload, readOnly = false, onBlockedAction }) {
   const [productId, setProductId] = useState('')
@@ -23,12 +24,12 @@ export default function Compras({ user, products, reload, readOnly = false, onBl
       return
     }
 
-    if (Number(quantity || 0) <= 0) {
+    if (parseDecimal(quantity) <= 0) {
       setMessage('A quantidade comprada precisa ser maior que zero.')
       return
     }
 
-    if (Number(totalValue || 0) < 0) {
+    if (parseDecimal(totalValue) < 0) {
       setMessage('O valor total pago não pode ser negativo.')
       return
     }
@@ -57,10 +58,10 @@ export default function Compras({ user, products, reload, readOnly = false, onBl
         </select>
 
         <label>Quantidade recebida</label>
-        <input min="0" type="number" step="0.01" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+        <input {...decimalInputProps({ min: '0', value: quantity, onChange: (e) => setQuantity(e.target.value), required: true })} />
 
         <label>Valor total da entrada</label>
-        <input min="0" type="number" step="0.01" value={totalValue} onChange={(e) => setTotalValue(e.target.value)} required />
+        <input {...decimalInputProps({ min: '0', value: totalValue, onChange: (e) => setTotalValue(e.target.value), required: true })} />
         {message && <p className="message">{message}</p>}
         <button className="primary-btn">Registrar entrada</button>
       </form>

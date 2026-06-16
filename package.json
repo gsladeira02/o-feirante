@@ -1,7 +1,7 @@
 {
-  "name": "o-feirante-v3-5-admin",
+  "name": "o-feirante-v3-5-2-teclado-letras",
   "private": true,
-  "version": "3.5.0",
+  "version": "3.5.2",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { startFair } from '../services/api'
 import { qty } from '../utils/format'
+import { decimalInputProps, parseDecimal } from '../utils/number'
 
 export default function ComecarFeira({ user, products, selectedFairPlace, reload, setPage, readOnly = false, onBlockedAction }) {
   const [items, setItems] = useState([])
@@ -21,7 +22,7 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
   }
 
   function updateQuantity(id, value) {
-    setItems(items.map((item) => item.id === id ? { ...item, quantity_taken: value } : item))
+    setItems((current) => current.map((item) => item.id === id ? { ...item, quantity_taken: value } : item))
   }
 
   async function submit(event) {
@@ -33,7 +34,7 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
       return
     }
 
-    const selected = items.filter((item) => Number(item.quantity_taken || 0) > 0)
+    const selected = items.filter((item) => parseDecimal(item.quantity_taken) > 0)
 
     if (!selected.length) {
       setMessage('Informe pelo menos um produto levado.')
@@ -41,14 +42,14 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
     }
 
     for (const item of items) {
-      const taken = Number(item.quantity_taken || 0)
+      const taken = parseDecimal(item.quantity_taken)
 
       if (taken < 0) {
         setMessage(`A quantidade de ${item.name} não pode ser negativa.`)
         return
       }
 
-      if (taken > Number(item.stock || 0)) {
+      if (taken > parseDecimal(item.stock)) {
         setMessage(`Você não tem estoque suficiente de ${item.name}.`)
         return
       }
@@ -82,13 +83,13 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
                 <small>Disponível: {qty(product.stock)} {product.unit}</small>
               </div>
               <input
-                min="0"
-                max={product.stock}
-                type="number"
-                step="0.01"
-                value={product.quantity_taken}
-                onChange={(e) => updateQuantity(product.id, e.target.value)}
-                placeholder="Levou"
+                {...decimalInputProps({
+                  min: '0',
+                  max: product.stock,
+                  value: product.quantity_taken,
+                  onChange: (e) => updateQuantity(product.id, e.target.value),
+                  placeholder: 'Levou',
+                })}
               />
             </article>
           ))}

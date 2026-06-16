@@ -3,6 +3,39 @@ import { createFairPlace, deleteFairPlace, updateFairPlace } from '../services/a
 
 const emptyForm = { name: '', address: '', weekday: '' }
 
+function FairFields({ data, setData }) {
+  return (
+    <>
+      <label>Nome da feira</label>
+      <input
+        value={data.name}
+        onChange={(e) => setData((current) => ({ ...current, name: e.target.value }))}
+        placeholder="Feira da Glória"
+        required
+      />
+
+      <label>Bairro ou endereço</label>
+      <input
+        value={data.address}
+        onChange={(e) => setData((current) => ({ ...current, address: e.target.value }))}
+        placeholder="Opcional"
+      />
+
+      <label>Dia da semana</label>
+      <select value={data.weekday} onChange={(e) => setData((current) => ({ ...current, weekday: e.target.value }))}>
+        <option value="">Não informar</option>
+        <option value="Segunda">Segunda</option>
+        <option value="Terça">Terça</option>
+        <option value="Quarta">Quarta</option>
+        <option value="Quinta">Quinta</option>
+        <option value="Sexta">Sexta</option>
+        <option value="Sábado">Sábado</option>
+        <option value="Domingo">Domingo</option>
+      </select>
+    </>
+  )
+}
+
 export default function Feiras({ user, fairPlaces, reload, setPage, setSelectedFairPlace, readOnly = false, onBlockedAction }) {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
@@ -99,30 +132,6 @@ export default function Feiras({ user, fairPlaces, reload, setPage, setSelectedF
 
     setSelectedFairPlace(place)
     setPage('comecar')
-  }
-
-  function FairFields({ data, setData }) {
-    return (
-      <>
-        <label>Nome da feira</label>
-        <input value={data.name} onChange={(e) => setData({ ...data, name: e.target.value })} placeholder="Feira da Glória" required />
-
-        <label>Bairro ou endereço</label>
-        <input value={data.address} onChange={(e) => setData({ ...data, address: e.target.value })} placeholder="Opcional" />
-
-        <label>Dia da semana</label>
-        <select value={data.weekday} onChange={(e) => setData({ ...data, weekday: e.target.value })}>
-          <option value="">Não informar</option>
-          <option value="Segunda">Segunda</option>
-          <option value="Terça">Terça</option>
-          <option value="Quarta">Quarta</option>
-          <option value="Quinta">Quinta</option>
-          <option value="Sexta">Sexta</option>
-          <option value="Sábado">Sábado</option>
-          <option value="Domingo">Domingo</option>
-        </select>
-      </>
-    )
   }
 
   return (

@@ -1,4 +1,5 @@
 import { supabase } from '../supabase'
+import { parseDecimal } from '../utils/number'
 
 export const DEMO_ACCOUNT_MESSAGE = 'Esta é uma conta teste. As ações de cadastro, edição, exclusão, entrada de mercadoria e início/encerramento de feira estão bloqueadas para demonstração.'
 
@@ -170,10 +171,10 @@ export async function deleteProduct(id) {
 
 export async function registerPurchase({ userId, product, quantity, totalValue }) {
   await ensureCanWrite()
-  const oldStock = Number(product.stock || 0)
-  const oldCost = Number(product.average_cost || 0)
-  const qty = Number(quantity || 0)
-  const total = Number(totalValue || 0)
+  const oldStock = parseDecimal(product.stock)
+  const oldCost = parseDecimal(product.average_cost)
+  const qty = parseDecimal(quantity)
+  const total = parseDecimal(totalValue)
   const newStock = oldStock + qty
   const newAverageCost = newStock > 0 ? ((oldStock * oldCost) + total) / newStock : 0
 
@@ -209,7 +210,7 @@ export async function getActiveFair(userId) {
 
 export async function startFair({ userId, fairPlace, items }) {
   await ensureCanWrite()
-  const selected = items.filter((item) => Number(item.quantity_taken || 0) > 0)
+  const selected = items.filter((item) => parseDecimal(item.quantity_taken) > 0)
   if (!selected.length) throw new Error('Informe pelo menos um produto levado.')
 
   const { data: fair, error: fairError } = await supabase
@@ -230,16 +231,16 @@ export async function startFair({ userId, fairPlace, items }) {
     product_id: item.id,
     product_name: item.name,
     unit: item.unit,
-    cost_at_time: Number(item.average_cost || 0),
-    sale_price_at_time: Number(item.sale_price || 0),
-    quantity_taken: Number(item.quantity_taken || 0),
+    cost_at_time: parseDecimal(item.average_cost),
+    sale_price_at_time: parseDecimal(item.sale_price),
+    quantity_taken: parseDecimal(item.quantity_taken),
   }))
 
   const { error: itemError } = await supabase.from('fair_items').insert(fairItems)
   if (itemError) throw itemError
 
   for (const item of selected) {
-    const newStock = Number(item.stock || 0) - Number(item.quantity_taken || 0)
+    const newStock = parseDecimal(item.stock) - parseDecimal(item.quantity_taken)
     const { error } = await supabase.from('products').update({ stock: newStock }).eq('id', item.id)
     if (error) throw error
   }
@@ -253,14 +254,14 @@ export async function closeFair({ fair, closingItems }) {
   let lossTotal = 0
 
   for (const item of closingItems) {
-    const taken = Number(item.quantity_taken || 0)
-    const returned = Number(item.quantity_returned || 0)
-    const lost = Number(item.quantity_lost || 0)
+    const taken = parseDecimal(item.quantity_taken)
+    const returned = parseDecimal(item.quantity_returned)
+    const lost = parseDecimal(item.quantity_lost)
     const sold = Math.max(taken - returned - lost, 0)
-    const revenue = sold * Number(item.sale_price_at_time || 0)
-    const cost = sold * Number(item.cost_at_time || 0)
+    const revenue = sold * parseDecimal(item.sale_price_at_time)
+    const cost = sold * parseDecimal(item.cost_at_time)
     const profit = revenue - cost
-    const lossValue = lost * Number(item.cost_at_time || 0)
+    const lossValue = lost * parseDecimal(item.cost_at_time)
 
     revenueTotal += revenue
     costTotal += cost
@@ -293,7 +294,7 @@ export async function closeFair({ fair, closingItems }) {
 
       const { error: productError } = await supabase
         .from('products')
-        .update({ stock: Number(product.stock || 0) + returned })
+        .update({ stock: parseDecimal(product.stock) + returned })
         .eq('id', item.product_id)
 
       if (productError) throw productError
@@ -364,9 +365,9 @@ export async function updateProduct(product) {
       category_id: product.category_id || null,
       name: product.name,
       unit: product.unit,
-      stock: Number(product.stock || 0),
-      average_cost: Number(product.average_cost || 0),
-      sale_price: Number(product.sale_price || 0),
+      stock: parseDecimal(product.stock),
+      average_cost: parseDecimal(product.average_cost),
+      sale_price: parseDecimal(product.sale_price),
     })
     .eq('id', product.id)
 

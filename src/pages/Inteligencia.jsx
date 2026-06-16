@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { buildFairStats, buildMonthlyStats, buildProductStats, buildSuggestions, getCurrentMonthTotals } from '../utils/analytics'
 import { money, qty } from '../utils/format'
+import { decimalInputProps, parseDecimal } from '../utils/number'
 
 export default function Inteligencia({ fairs, fairPlaces }) {
   const [goal, setGoal] = useState(() => localStorage.getItem('ofeirante_meta_mensal') || '')
@@ -17,7 +18,7 @@ export default function Inteligencia({ fairs, fairPlaces }) {
   const worstLoss = [...productStats].sort((a, b) => b.lossValue - a.lossValue).slice(0, 5)
   const bestFairs = [...fairStats].sort((a, b) => b.avgProfit - a.avgProfit).slice(0, 5)
 
-  const numericGoal = Number(goal || 0)
+  const numericGoal = parseDecimal(goal)
   const goalPercent = numericGoal > 0 ? Math.min((monthTotals.revenue / numericGoal) * 100, 100) : 0
 
   function saveGoal(value) {
@@ -58,12 +59,12 @@ export default function Inteligencia({ fairs, fairPlaces }) {
 
         <div className="goal-box">
           <input
-            min="0"
-            type="number"
-            step="0.01"
-            value={goal}
-            onChange={(e) => saveGoal(e.target.value)}
-            placeholder="Meta de faturamento"
+            {...decimalInputProps({
+              min: '0',
+              value: goal,
+              onChange: (e) => saveGoal(e.target.value),
+              placeholder: 'Meta de faturamento',
+            })}
           />
           <div className="progress-bar">
             <div style={{ width: `${goalPercent}%` }} />
