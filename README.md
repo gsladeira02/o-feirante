@@ -1,4 +1,4 @@
-# O Feirante V3.5.2
+# O Feirante V3.5.3
 
 # O Feirante V3.3
 
@@ -81,13 +81,18 @@ update public.profiles set is_admin = true where id = 'SEU_UID_AQUI';
 ```
 
 
-## V3.5.2 - Correção de teclado no celular
+## V3.5.3 - Correção de teclado no celular
 
 - Corrigido problema em que o teclado do celular abria e fechava ao digitar vírgula em campos numéricos.
 - Campos de quantidade, custo, venda, entrada, iniciar feira, encerrar feira e meta mensal agora aceitam vírgula decimal.
 - O componente de campos do produto foi estabilizado para não remontar os inputs a cada digitação.
 
 
-## Correção V3.5.2
+## Correção V3.5.3
 
 Corrige o teclado fechando ao digitar letras nos campos de texto das feiras. O componente dos campos de feira foi estabilizado fora do componente principal para evitar remount a cada tecla.
+
+
+## V3.5.3
+
+Correção específica no cadastro/edição de produtos: os campos de produto foram convertidos para entradas estáveis sem atualização de estado a cada tecla, evitando que o teclado feche no celular durante a digitação.

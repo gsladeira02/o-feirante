@@ -12,20 +12,39 @@ const emptyForm = {
   sale_price: '',
 }
 
-function ProductFields({ data, setData, categories }) {
+function productFromForm(formElement) {
+  const formData = new FormData(formElement)
+
+  return {
+    name: String(formData.get('name') || ''),
+    category_id: String(formData.get('category_id') || ''),
+    unit: String(formData.get('unit') || 'kg'),
+    stock: String(formData.get('stock') || ''),
+    average_cost: String(formData.get('average_cost') || ''),
+    sale_price: String(formData.get('sale_price') || ''),
+  }
+}
+
+function ProductFields({ defaultValues = emptyForm, categories }) {
   return (
     <>
       <label>Produto</label>
-      <input value={data.name} onChange={(e) => setData((current) => ({ ...current, name: e.target.value }))} placeholder="Banana" required />
+      <input
+        name="name"
+        defaultValue={defaultValues.name || ''}
+        placeholder="Banana"
+        autoComplete="off"
+        required
+      />
 
       <label>Categoria</label>
-      <select value={data.category_id} onChange={(e) => setData((current) => ({ ...current, category_id: e.target.value }))}>
+      <select name="category_id" defaultValue={defaultValues.category_id || ''}>
         <option value="">Sem categoria</option>
         {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
       </select>
 
       <label>Unidade</label>
-      <select value={data.unit} onChange={(e) => setData((current) => ({ ...current, unit: e.target.value }))}>
+      <select name="unit" defaultValue={defaultValues.unit || 'kg'}>
         <option value="kg">kg</option>
         <option value="un">unidade</option>
         <option value="dz">dúzia</option>
@@ -36,24 +55,39 @@ function ProductFields({ data, setData, categories }) {
       <div className="row">
         <div>
           <label>Quantidade</label>
-          <input {...decimalInputProps({ min: '0', value: data.stock, onChange: (e) => setData((current) => ({ ...current, stock: e.target.value })) })} />
+          <input
+            {...decimalInputProps({ min: '0' })}
+            name="stock"
+            defaultValue={defaultValues.stock ?? ''}
+            autoComplete="off"
+          />
         </div>
         <div>
           <label>Preço de venda</label>
-          <input {...decimalInputProps({ min: '0', value: data.sale_price, onChange: (e) => setData((current) => ({ ...current, sale_price: e.target.value })) })} />
+          <input
+            {...decimalInputProps({ min: '0' })}
+            name="sale_price"
+            defaultValue={defaultValues.sale_price ?? ''}
+            autoComplete="off"
+          />
         </div>
       </div>
 
       <label>Preço de custo</label>
-      <input {...decimalInputProps({ min: '0', value: data.average_cost, onChange: (e) => setData((current) => ({ ...current, average_cost: e.target.value })) })} />
+      <input
+        {...decimalInputProps({ min: '0' })}
+        name="average_cost"
+        defaultValue={defaultValues.average_cost ?? ''}
+        autoComplete="off"
+      />
     </>
   )
 }
 
 export default function Estoque({ user, products, categories, reload, setPage, readOnly = false, onBlockedAction }) {
-  const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState(emptyForm)
+  const [formKey, setFormKey] = useState(0)
   const [message, setMessage] = useState('')
 
   function validateProduct(data) {
@@ -73,7 +107,8 @@ export default function Estoque({ user, products, categories, reload, setPage, r
       return
     }
 
-    const errorMessage = validateProduct(form)
+    const formData = productFromForm(event.currentTarget)
+    const errorMessage = validateProduct(formData)
     if (errorMessage) {
       setMessage(errorMessage)
       return
@@ -82,15 +117,16 @@ export default function Estoque({ user, products, categories, reload, setPage, r
     try {
       await createProduct({
         user_id: user.id,
-        category_id: form.category_id || null,
-        name: form.name.trim(),
-        unit: form.unit,
-        stock: parseDecimal(form.stock),
-        average_cost: parseDecimal(form.average_cost),
-        sale_price: parseDecimal(form.sale_price),
+        category_id: formData.category_id || null,
+        name: formData.name.trim(),
+        unit: formData.unit,
+        stock: parseDecimal(formData.stock),
+        average_cost: parseDecimal(formData.average_cost),
+        sale_price: parseDecimal(formData.sale_price),
       })
 
-      setForm(emptyForm)
+      event.currentTarget.reset()
+      setFormKey((current) => current + 1)
       await reload()
     } catch (error) {
       setMessage(error.message)
@@ -124,7 +160,8 @@ export default function Estoque({ user, products, categories, reload, setPage, r
       return
     }
 
-    const errorMessage = validateProduct(editForm)
+    const formData = productFromForm(event.currentTarget)
+    const errorMessage = validateProduct(formData)
     if (errorMessage) {
       setMessage(errorMessage)
       return
@@ -133,8 +170,12 @@ export default function Estoque({ user, products, categories, reload, setPage, r
     try {
       await updateProduct({
         id: editingId,
-        ...editForm,
-        name: editForm.name.trim(),
+        category_id: formData.category_id || null,
+        name: formData.name.trim(),
+        unit: formData.unit,
+        stock: parseDecimal(formData.stock),
+        average_cost: parseDecimal(formData.average_cost),
+        sale_price: parseDecimal(formData.sale_price),
       })
 
       setEditingId(null)
@@ -166,10 +207,10 @@ export default function Estoque({ user, products, categories, reload, setPage, r
     <main className="page">
       <h2>Estoque</h2>
 
-      <form className="form-card compact" onSubmit={submit}>
+      <form className="form-card compact" onSubmit={submit} key={formKey}>
         <h3>Novo produto</h3>
 
-        <ProductFields data={form} setData={setForm} categories={categories} />
+        <ProductFields categories={categories} />
 
         {!categories.length && (
           <button type="button" className="secondary-btn" onClick={() => setPage('categorias')}>Criar primeira categoria</button>
@@ -184,7 +225,7 @@ export default function Estoque({ user, products, categories, reload, setPage, r
           <article className="item-card editable-card" key={product.id}>
             {editingId === product.id ? (
               <form className="inline-edit wide" onSubmit={saveEdit}>
-                <ProductFields data={editForm} setData={setEditForm} categories={categories} />
+                <ProductFields defaultValues={editForm} categories={categories} />
                 <div className="inline-actions">
                   <button className="mini-filled" type="submit">Salvar</button>
                   <button className="mini-btn" type="button" onClick={() => setEditingId(null)}>Cancelar</button>
