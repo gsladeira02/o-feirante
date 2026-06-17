@@ -212,6 +212,8 @@ input, select {
 input:focus, select:focus { border-color: var(--green); }
 
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row.three-cols { grid-template-columns: 1fr 1fr 1fr; }
+.full-width { width: 100%; }
 
 .primary-btn, .secondary-btn {
   width: 100%;

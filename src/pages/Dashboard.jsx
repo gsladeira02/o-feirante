@@ -18,7 +18,7 @@ export default function Dashboard({ products, fairs, activeFair, setPage }) {
         <button className="action-card danger" onClick={() => setPage('encerrar')}>
           <strong>Feira em andamento</strong>
           <span>{activeFair.name}</span>
-          <small>Toque para encerrar e calcular.</small>
+          <small>Toque para ajustar o que levou ou encerrar.</small>
         </button>
       ) : (
         <button className="action-card success" onClick={() => setPage('feiras')}>

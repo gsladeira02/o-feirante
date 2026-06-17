@@ -1,26 +1,19 @@
-# O Feirante V3.6
+# O Feirante V3.6.1 - Ajuste do que levou
 
-Versão com organização alfabética por categorias, entregas e entrada de mercadoria dentro do estoque.
+Atualização sobre a V3.6.
 
 ## Novidades
 
-- Produtos ordenados primeiro por categoria e depois por nome.
-- Tela de iniciar feira também organizada por categoria e nome.
-- Nova aba **Entregas**.
-- Cadastro de clientes com nome, endereço e telefone.
-- Criação de entrega com cliente, produto, quantidade e data.
-- Confirmação de entrega com baixa automática do estoque.
-- Entrada de mercadoria disponível dentro da aba **Estoque**.
-- Abas inferiores reduzidas para caber em uma linha no celular.
-
-## Supabase
-
-Depois de subir a versão, rode no Supabase:
-
-```txt
-supabase/migration-v3-6-entregas.sql
-```
+- O feirante pode editar a quantidade que levou durante uma feira em andamento.
+- A tela de Encerrar feira agora tem campo editável "Levou" para cada produto.
+- Botão "Salvar ajuste do que levou" ajusta o estoque automaticamente.
+- Ao encerrar a feira, se a quantidade levada tiver sido alterada e ainda não salva, o sistema também corrige o estoque antes de fechar.
+- Validação para impedir quantidade negativa e estoque insuficiente.
 
 ## Deploy
 
-Suba os arquivos da pasta na raiz do GitHub, não a pasta inteira.
+Suba os arquivos da raiz desta pasta para o GitHub. Não suba o ZIP fechado e não suba a pasta inteira.
+
+## Supabase
+
+Não precisa rodar nova migration para esta versão.

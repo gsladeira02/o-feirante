@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react'
-import { closeFair } from '../services/api'
+import { closeFair, updateFairTaken } from '../services/api'
 import { money, qty } from '../utils/format'
 import { decimalInputProps, parseDecimal } from '../utils/number'
 
 export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = false, onBlockedAction }) {
-  const [items, setItems] = useState((activeFair?.fair_items || []).map((item) => ({
-    ...item,
-    quantity_returned: '',
-    quantity_lost: '',
-  })))
+  const [items, setItems] = useState((activeFair?.fair_items || [])
+    .slice()
+    .sort((a, b) => String(a.product_name || '').localeCompare(String(b.product_name || ''), 'pt-BR'))
+    .map((item) => ({
+      ...item,
+      quantity_taken: String(item.quantity_taken ?? ''),
+      quantity_returned: '',
+      quantity_lost: '',
+    })))
   const [showSummary, setShowSummary] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -55,6 +59,7 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
       const lost = parseDecimal(item.quantity_lost)
       const taken = parseDecimal(item.quantity_taken)
 
+      if (taken < 0) return `A quantidade levada de ${item.product_name} não pode ser negativa.`
       if (returned < 0) return `A quantidade que voltou de ${item.product_name} não pode ser negativa.`
       if (lost < 0) return `A perda de ${item.product_name} não pode ser negativa.`
       if (returned + lost > taken) return `${item.product_name}: voltou + perdeu não pode ser maior que a quantidade levada.`
@@ -75,6 +80,29 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
 
     setShowSummary(true)
   }
+  async function saveTakenAdjustments() {
+    setMessage('')
+
+    if (readOnly) {
+      setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Ajustar produtos levados está bloqueado.')
+      return
+    }
+
+    const errorMessage = validateClosing()
+    if (errorMessage) {
+      setMessage(errorMessage)
+      return
+    }
+
+    try {
+      await updateFairTaken({ closingItems: items })
+      await reload()
+      setMessage('Produtos levados atualizados com sucesso.')
+    } catch (error) {
+      setMessage(error.message)
+    }
+  }
+
 
   async function confirmClose() {
     setMessage('')
@@ -103,6 +131,10 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
     <main className="page">
       <h2>Encerrar feira</h2>
       <p className="muted">{activeFair.name}</p>
+      <section className="selected-fair-card">
+        <strong>Ajuste o que foi levado</strong>
+        <span>Se você esqueceu algum item ou digitou uma quantidade errada ao iniciar a feira, altere o campo <b>Levou</b>. O estoque será ajustado automaticamente.</span>
+      </section>
 
       <form onSubmit={preview}>
         <section className="list">
@@ -116,10 +148,14 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
               <article className="close-card" key={item.id}>
                 <div className="close-header">
                   <strong>{item.product_name}</strong>
-                  <span>Levou {qty(item.quantity_taken)} {item.unit}</span>
+                  <span>{item.unit}</span>
                 </div>
 
-                <div className="row">
+                <div className="row three-cols">
+                  <div>
+                    <label>Levou</label>
+                    <input {...decimalInputProps({ min: '0', value: item.quantity_taken, onChange: (e) => update(item.id, 'quantity_taken', e.target.value) })} />
+                  </div>
                   <div>
                     <label>Voltou</label>
                     <input {...decimalInputProps({ min: '0', value: item.quantity_returned, onChange: (e) => update(item.id, 'quantity_returned', e.target.value) })} />
@@ -137,6 +173,8 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
         </section>
 
         {message && <p className="message">{message}</p>}
+
+        <button type="button" className="secondary-btn full-width" onClick={saveTakenAdjustments}>Salvar ajuste do que levou</button>
 
         {showSummary && (
           <section className="summary-card">

@@ -263,6 +263,53 @@ export async function startFair({ userId, fairPlace, items }) {
   }
 }
 
+export async function updateFairTaken({ closingItems }) {
+  await ensureCanWrite()
+
+  for (const item of closingItems) {
+    const newTaken = parseDecimal(item.quantity_taken)
+    if (newTaken < 0) throw new Error(`A quantidade levada de ${item.product_name} não pode ser negativa.`)
+
+    const { data: currentItem, error: itemReadError } = await supabase
+      .from('fair_items')
+      .select('quantity_taken')
+      .eq('id', item.id)
+      .single()
+
+    if (itemReadError) throw itemReadError
+
+    const oldTaken = parseDecimal(currentItem.quantity_taken)
+    const diffTaken = newTaken - oldTaken
+
+    if (diffTaken !== 0) {
+      const { data: product, error: productReadError } = await supabase
+        .from('products')
+        .select('stock')
+        .eq('id', item.product_id)
+        .single()
+
+      if (productReadError) throw productReadError
+
+      const newStock = parseDecimal(product.stock) - diffTaken
+      if (newStock < 0) throw new Error(`Estoque insuficiente para ajustar ${item.product_name}.`)
+
+      const { error: productError } = await supabase
+        .from('products')
+        .update({ stock: newStock })
+        .eq('id', item.product_id)
+
+      if (productError) throw productError
+    }
+
+    const { error: itemError } = await supabase
+      .from('fair_items')
+      .update({ quantity_taken: newTaken })
+      .eq('id', item.id)
+
+    if (itemError) throw itemError
+  }
+}
+
 export async function closeFair({ fair, closingItems }) {
   await ensureCanWrite()
   let revenueTotal = 0
@@ -285,9 +332,21 @@ export async function closeFair({ fair, closingItems }) {
     profitTotal += profit
     lossTotal += lossValue
 
+    const { data: currentItem, error: itemReadError } = await supabase
+      .from('fair_items')
+      .select('quantity_taken')
+      .eq('id', item.id)
+      .single()
+
+    if (itemReadError) throw itemReadError
+
+    const oldTaken = parseDecimal(currentItem.quantity_taken)
+    const diffTaken = taken - oldTaken
+
     const { error: itemError } = await supabase
       .from('fair_items')
       .update({
+        quantity_taken: taken,
         quantity_returned: returned,
         quantity_lost: lost,
         quantity_sold: sold,
@@ -300,7 +359,7 @@ export async function closeFair({ fair, closingItems }) {
 
     if (itemError) throw itemError
 
-    if (returned > 0) {
+    if (diffTaken !== 0 || returned > 0) {
       const { data: product, error: productReadError } = await supabase
         .from('products')
         .select('stock')
@@ -309,9 +368,12 @@ export async function closeFair({ fair, closingItems }) {
 
       if (productReadError) throw productReadError
 
+      const newStock = parseDecimal(product.stock) - diffTaken + returned
+      if (newStock < 0) throw new Error(`Estoque insuficiente para ajustar ${item.product_name}.`)
+
       const { error: productError } = await supabase
         .from('products')
-        .update({ stock: parseDecimal(product.stock) + returned })
+        .update({ stock: newStock })
         .eq('id', item.product_id)
 
       if (productError) throw productError
