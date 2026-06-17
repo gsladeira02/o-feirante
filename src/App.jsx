@@ -4,6 +4,8 @@ import {
   getActiveFair,
   getCategories,
   getClosedFairs,
+  getDeliveries,
+  getDeliveryCustomers,
   getFairPlaces,
   DEMO_ACCOUNT_MESSAGE,
   getOrCreateProfile,
@@ -27,6 +29,7 @@ import EncerrarFeira from './pages/EncerrarFeira'
 import Historico from './pages/Historico'
 import Inteligencia from './pages/Inteligencia'
 import Admin from './pages/Admin'
+import Entregas from './pages/Entregas'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -35,6 +38,8 @@ export default function App() {
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [fairPlaces, setFairPlaces] = useState([])
+  const [customers, setCustomers] = useState([])
+  const [deliveries, setDeliveries] = useState([])
   const [fairs, setFairs] = useState([])
   const [activeFair, setActiveFair] = useState(null)
   const [selectedFairPlace, setSelectedFairPlace] = useState(null)
@@ -56,10 +61,12 @@ export default function App() {
 
     if (profileData.first_login) return
 
-    const [productsData, categoriesData, fairPlacesData, fairsData, activeFairData] = await Promise.all([
+    const [productsData, categoriesData, fairPlacesData, customersData, deliveriesData, fairsData, activeFairData] = await Promise.all([
       getProducts(currentUser.id),
       getCategories(currentUser.id),
       getFairPlaces(currentUser.id),
+      getDeliveryCustomers(currentUser.id),
+      getDeliveries(currentUser.id),
       getClosedFairs(currentUser.id),
       getActiveFair(currentUser.id),
     ])
@@ -67,6 +74,8 @@ export default function App() {
     setProducts(productsData)
     setCategories(categoriesData)
     setFairPlaces(fairPlacesData)
+    setCustomers(customersData)
+    setDeliveries(deliveriesData)
     setFairs(fairsData)
     setActiveFair(activeFairData)
   }
@@ -107,6 +116,8 @@ export default function App() {
     setProducts([])
     setCategories([])
     setFairPlaces([])
+    setCustomers([])
+    setDeliveries([])
     setFairs([])
     setActiveFair(null)
     setSelectedFairPlace(null)
@@ -202,6 +213,18 @@ export default function App() {
 
       {page === 'compras' && (
         <Compras user={user} products={products} reload={loadData} readOnly={isDemoAccount} onBlockedAction={showDemoMessage} />
+      )}
+
+      {page === 'entregas' && (
+        <Entregas
+          user={user}
+          products={products}
+          customers={customers}
+          deliveries={deliveries}
+          reload={loadData}
+          readOnly={isDemoAccount}
+          onBlockedAction={showDemoMessage}
+        />
       )}
 
       {page === 'feiras' && (

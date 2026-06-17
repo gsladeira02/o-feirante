@@ -51,6 +51,7 @@ export default function Dashboard({ products, fairs, activeFair, setPage }) {
           <button onClick={() => setPage('categorias')}>Categorias</button>
           <button onClick={() => setPage('feiras')}>Feiras</button>
           <button onClick={() => setPage('compras')}>Entrada</button>
+          <button onClick={() => setPage('entregas')}>Entregas</button>
           <button onClick={() => setPage('historico')}>Histórico</button>
           <button onClick={() => setPage('inteligencia')}>Inteligência</button>
         </div>

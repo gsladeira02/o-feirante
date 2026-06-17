@@ -7,14 +7,14 @@ export function PrivacyPolicy() {
       <p>Esta Política de Privacidade explica como o <strong>O Feirante</strong> coleta, utiliza, armazena e protege as informações dos usuários que acessam e utilizam a plataforma.</p>
 
       <h3>1. Sobre o O Feirante</h3>
-      <p>O O Feirante é uma plataforma digital de gestão criada para auxiliar feirantes no controle de produtos, estoque, entrada de mercadoria, feiras, histórico de vendas, perdas e resultados da banca.</p>
+      <p>O O Feirante é uma plataforma digital de gestão criada para auxiliar feirantes no controle de produtos, estoque, entrada de mercadoria, feiras, entregas, histórico de vendas, perdas e resultados da banca.</p>
 
       <h3>2. Dados coletados</h3>
-      <p>Para funcionamento da plataforma e contratação dos planos, o O Feirante pode coletar e armazenar nome completo, e-mail, CPF, data de nascimento, celular, cidade, estado, nome da banca, CNPJ quando informado, plano escolhido, status do pagamento, produtos cadastrados, categorias, estoque, entradas de mercadoria, locais e dias de feira, itens levados para cada feira, quantidades vendidas, retornadas ou perdidas, histórico de faturamento, custos, lucro estimado e perdas.</p>
+      <p>Para funcionamento da plataforma e contratação dos planos, o O Feirante pode coletar e armazenar nome completo, e-mail, CPF, data de nascimento, celular, cidade, estado, nome da banca, CNPJ quando informado, plano escolhido, status do pagamento, produtos cadastrados, categorias, estoque, entradas de mercadoria, locais e dias de feira, itens levados para cada feira, quantidades vendidas, retornadas ou perdidas, clientes de entrega, endereços e telefones cadastrados para entrega, produtos entregues, datas de entrega, histórico de faturamento, custos, lucro estimado e perdas.</p>
       <p>O O Feirante não solicita dados sensíveis, como informações de saúde, religião, opinião política, biometria ou documentos pessoais sensíveis.</p>
 
       <h3>3. Finalidade do uso dos dados</h3>
-      <p>Os dados são utilizados para permitir o cadastro e contratação do plano, gerar link de pagamento, liberar o acesso à conta, organizar produtos e estoque, registrar entradas de mercadoria, controlar feiras, calcular resultados, exibir histórico e análises da banca, melhorar a experiência de uso e prestar suporte quando necessário.</p>
+      <p>Os dados são utilizados para permitir o cadastro e contratação do plano, gerar link de pagamento, liberar o acesso à conta, organizar produtos e estoque, registrar entradas de mercadoria, controlar feiras, cadastrar clientes de entrega, criar e confirmar entregas, calcular resultados, exibir histórico e análises da banca, melhorar a experiência de uso e prestar suporte quando necessário.</p>
 
       <h3>4. Compartilhamento de dados</h3>
       <p>O O Feirante não vende dados dos usuários. Os dados podem ser armazenados ou processados por serviços de tecnologia necessários para o funcionamento da plataforma, como hospedagem, autenticação, banco de dados, infraestrutura e gateway de pagamento.</p>
@@ -54,7 +54,7 @@ export function TermsOfUse() {
       <p>Estes Termos de Uso regulam o acesso e a utilização da plataforma <strong>O Feirante</strong>. Ao acessar ou utilizar o sistema, o usuário declara que leu, compreendeu e concorda com estes Termos.</p>
 
       <h3>1. Sobre o sistema</h3>
-      <p>O O Feirante é uma plataforma digital criada para auxiliar feirantes no controle de produtos, estoque, entrada de mercadoria, feiras, histórico de vendas, perdas e lucro estimado.</p>
+      <p>O O Feirante é uma plataforma digital criada para auxiliar feirantes no controle de produtos, estoque, entrada de mercadoria, feiras, entregas, histórico de vendas, perdas e lucro estimado.</p>
 
       <h3>2. Acesso à plataforma</h3>
       <p>O acesso é realizado por meio de login e senha. As contas são criadas e liberadas conforme o plano contratado ou autorização do responsável pela plataforma.</p>
@@ -67,7 +67,7 @@ export function TermsOfUse() {
       <p>O pagamento pode ser realizado por gateway externo. O não pagamento, atraso, cancelamento, contestação ou falha na confirmação do plano poderá resultar na não liberação, suspensão, bloqueio ou encerramento do acesso à plataforma.</p>
 
       <h3>5. Uso permitido</h3>
-      <p>O usuário deve utilizar o O Feirante apenas para fins lícitos e relacionados à organização de sua banca, estoque, produtos, feiras e resultados.</p>
+      <p>O usuário deve utilizar o O Feirante apenas para fins lícitos e relacionados à organização de sua banca, estoque, produtos, entregas, clientes, feiras e resultados.</p>
       <p>É proibido tentar acessar contas de terceiros, copiar ou revender a plataforma sem autorização, realizar engenharia reversa, ataques, testes indevidos ou qualquer tentativa de violação de segurança.</p>
 
       <h3>6. Responsabilidade pelos dados cadastrados</h3>

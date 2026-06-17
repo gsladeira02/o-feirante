@@ -3,6 +3,23 @@ import { parseDecimal } from '../utils/number'
 
 export const DEMO_ACCOUNT_MESSAGE = 'Esta é uma conta teste. As ações de cadastro, edição, exclusão, entrada de mercadoria e início/encerramento de feira estão bloqueadas para demonstração.'
 
+
+function normalizeText(value = '') {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+export function sortProductsByCategoryName(products = []) {
+  return [...products].sort((a, b) => {
+    const categoryA = normalizeText(a.categories?.name || 'Sem categoria')
+    const categoryB = normalizeText(b.categories?.name || 'Sem categoria')
+    if (categoryA !== categoryB) return categoryA.localeCompare(categoryB, 'pt-BR')
+    return normalizeText(a.name).localeCompare(normalizeText(b.name), 'pt-BR')
+  })
+}
+
 export async function getUserAccess(userId) {
   const { data, error } = await supabase
     .from('user_access')
@@ -154,7 +171,7 @@ export async function getProducts(userId) {
     .order('name')
 
   if (error) throw error
-  return data || []
+  return sortProductsByCategoryName(data || [])
 }
 
 export async function createProduct(product) {
@@ -410,4 +427,142 @@ export async function adminListSignups() {
   if (error?.code === '42883' || error?.message?.includes('admin_list_signups')) return []
   if (error) throw error
   return data || []
+}
+
+
+export async function getDeliveryCustomers(userId) {
+  const { data, error } = await supabase
+    .from('delivery_customers')
+    .select('*')
+    .eq('user_id', userId)
+    .order('name')
+
+  if (error?.code === '42P01' || error?.code === 'PGRST205' || error?.message?.includes('delivery_customers')) return []
+  if (error) throw error
+  return data || []
+}
+
+export async function createDeliveryCustomer({ userId, name, address, phone }) {
+  await ensureCanWrite()
+  const cleanName = String(name || '').trim()
+  if (!cleanName) throw new Error('Informe o nome do cliente.')
+
+  const { error } = await supabase.from('delivery_customers').insert({
+    user_id: userId,
+    name: cleanName,
+    address: String(address || '').trim(),
+    phone: String(phone || '').trim(),
+  })
+
+  if (error) throw error
+}
+
+export async function updateDeliveryCustomer({ id, name, address, phone }) {
+  await ensureCanWrite()
+  const cleanName = String(name || '').trim()
+  if (!cleanName) throw new Error('Informe o nome do cliente.')
+
+  const { error } = await supabase
+    .from('delivery_customers')
+    .update({ name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim() })
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+export async function deleteDeliveryCustomer(id) {
+  await ensureCanWrite()
+  const { error } = await supabase.from('delivery_customers').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function getDeliveries(userId) {
+  const { data, error } = await supabase
+    .from('deliveries')
+    .select('*, delivery_customers(name, address, phone), delivery_items(*, products(name, unit, categories(name)))')
+    .eq('user_id', userId)
+    .order('delivery_date', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (error?.code === '42P01' || error?.code === 'PGRST205' || error?.message?.includes('deliveries')) return []
+  if (error) throw error
+  return data || []
+}
+
+export async function createDelivery({ userId, customerId, product, quantity, deliveryDate }) {
+  await ensureCanWrite()
+  if (!customerId) throw new Error('Selecione um cliente.')
+  if (!product) throw new Error('Selecione um produto.')
+  const qty = parseDecimal(quantity)
+  if (qty <= 0) throw new Error('A quantidade da entrega precisa ser maior que zero.')
+  if (qty > parseDecimal(product.stock)) throw new Error(`Você não tem estoque suficiente de ${product.name}.`)
+
+  const { data: delivery, error: deliveryError } = await supabase
+    .from('deliveries')
+    .insert({
+      user_id: userId,
+      customer_id: customerId,
+      delivery_date: deliveryDate || new Date().toISOString().slice(0, 10),
+      status: 'pending',
+    })
+    .select()
+    .single()
+
+  if (deliveryError) throw deliveryError
+
+  const { error: itemError } = await supabase.from('delivery_items').insert({
+    delivery_id: delivery.id,
+    product_id: product.id,
+    product_name: product.name,
+    unit: product.unit,
+    quantity: qty,
+    cost_at_time: parseDecimal(product.average_cost),
+    sale_price_at_time: parseDecimal(product.sale_price),
+    revenue: qty * parseDecimal(product.sale_price),
+    cost: qty * parseDecimal(product.average_cost),
+    profit: qty * (parseDecimal(product.sale_price) - parseDecimal(product.average_cost)),
+  })
+
+  if (itemError) throw itemError
+}
+
+export async function confirmDelivery(delivery) {
+  await ensureCanWrite()
+  if (!delivery || delivery.status === 'delivered') throw new Error('Entrega inválida ou já confirmada.')
+
+  const items = delivery.delivery_items || []
+  if (!items.length) throw new Error('Entrega sem produtos.')
+
+  for (const item of items) {
+    const { data: product, error: readError } = await supabase
+      .from('products')
+      .select('stock')
+      .eq('id', item.product_id)
+      .single()
+
+    if (readError) throw readError
+
+    const newStock = parseDecimal(product.stock) - parseDecimal(item.quantity)
+    if (newStock < 0) throw new Error(`Estoque insuficiente para confirmar ${item.product_name}.`)
+
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({ stock: newStock })
+      .eq('id', item.product_id)
+
+    if (updateError) throw updateError
+  }
+
+  const { error } = await supabase
+    .from('deliveries')
+    .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+    .eq('id', delivery.id)
+
+  if (error) throw error
+}
+
+export async function cancelDelivery(id) {
+  await ensureCanWrite()
+  const { error } = await supabase.from('deliveries').delete().eq('id', id)
+  if (error) throw error
 }

@@ -1,12 +1,25 @@
-# O Feirante V3.5.4
+# O Feirante V3.6
 
-Correção emergencial do cadastro de produtos.
+Versão com organização alfabética por categorias, entregas e entrada de mercadoria dentro do estoque.
 
-## Correção
+## Novidades
 
-- Corrigido erro: `Cannot read properties of null (reading 'reset')` ao salvar produto.
-- O formulário agora guarda a referência antes da operação assíncrona, evitando que o React zere `event.currentTarget` após o cadastro.
-- Mantém as correções anteriores de teclado no celular e painel admin.
+- Produtos ordenados primeiro por categoria e depois por nome.
+- Tela de iniciar feira também organizada por categoria e nome.
+- Nova aba **Entregas**.
+- Cadastro de clientes com nome, endereço e telefone.
+- Criação de entrega com cliente, produto, quantidade e data.
+- Confirmação de entrega com baixa automática do estoque.
+- Entrada de mercadoria disponível dentro da aba **Estoque**.
+- Abas inferiores reduzidas para caber em uma linha no celular.
+
+## Supabase
+
+Depois de subir a versão, rode no Supabase:
+
+```txt
+supabase/migration-v3-6-entregas.sql
+```
 
 ## Deploy
 

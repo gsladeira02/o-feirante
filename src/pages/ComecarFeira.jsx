@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { startFair } from '../services/api'
 import { qty } from '../utils/format'
 import { decimalInputProps, parseDecimal } from '../utils/number'
@@ -10,6 +10,21 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
   useEffect(() => {
     setItems(products.map((p) => ({ ...p, quantity_taken: '' })))
   }, [products])
+
+  const groupedItems = useMemo(() => {
+    const groups = []
+    const map = new Map()
+    items.forEach((product) => {
+      const categoryName = product.categories?.name || 'Sem categoria'
+      if (!map.has(categoryName)) {
+        const group = { name: categoryName, items: [] }
+        map.set(categoryName, group)
+        groups.push(group)
+      }
+      map.get(categoryName).items.push(product)
+    })
+    return groups
+  }, [items])
 
   if (!selectedFairPlace) {
     return (
@@ -75,23 +90,27 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
 
       <form onSubmit={submit}>
         <section className="list">
-          {items.map((product) => (
-            <article className="item-card input-card" key={product.id}>
-              <div>
-                <strong>{product.name}</strong>
-                <span>{product.categories?.name || 'Sem categoria'}</span>
-                <small>Disponível: {qty(product.stock)} {product.unit}</small>
-              </div>
-              <input
-                {...decimalInputProps({
-                  min: '0',
-                  max: product.stock,
-                  value: product.quantity_taken,
-                  onChange: (e) => updateQuantity(product.id, e.target.value),
-                  placeholder: 'Levou',
-                })}
-              />
-            </article>
+          {groupedItems.map((group) => (
+            <div className="category-group" key={group.name}>
+              <h3>{group.name}</h3>
+              {group.items.map((product) => (
+                <article className="item-card input-card" key={product.id}>
+                  <div>
+                    <strong>{product.name}</strong>
+                    <small>Disponível: {qty(product.stock)} {product.unit}</small>
+                  </div>
+                  <input
+                    {...decimalInputProps({
+                      min: '0',
+                      max: product.stock,
+                      value: product.quantity_taken,
+                      onChange: (e) => updateQuantity(product.id, e.target.value),
+                      placeholder: 'Levou',
+                    })}
+                  />
+                </article>
+              ))}
+            </div>
           ))}
         </section>
 
