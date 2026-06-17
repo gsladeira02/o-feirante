@@ -1,26 +1,19 @@
-# O Feirante V3.6.1 - Ajuste do que levou
+# O Feirante — V3.6.3
 
-Atualização sobre a V3.6.
+Versão com histórico de compras por cliente na aba Entregas.
 
 ## Novidades
 
-- O feirante pode editar a quantidade que levou durante uma feira em andamento.
-- A tela de Encerrar feira agora tem campo editável "Levou" para cada produto.
-- Botão "Salvar ajuste do que levou" ajusta o estoque automaticamente.
-- Ao encerrar a feira, se a quantidade levada tiver sido alterada e ainda não salva, o sistema também corrige o estoque antes de fechar.
-- Validação para impedir quantidade negativa e estoque insuficiente.
+- Histórico de compras/entregas por cliente.
+- Resumo por cliente: total comprado, compras confirmadas, entregas pendentes e produto mais comprado.
+- Botão para filtrar entregas de um cliente específico.
+- Botão para repetir uma entrega já confirmada.
+- Mantém Entregas, Clientes, Entrada de mercadoria no Estoque, edição do que levou e painel de gestão.
 
 ## Deploy
 
-Suba os arquivos da raiz desta pasta para o GitHub. Não suba o ZIP fechado e não suba a pasta inteira.
+Suba os arquivos da pasta do projeto na raiz do GitHub. Não suba a pasta inteira e não suba o ZIP.
 
 ## Supabase
 
-Não precisa rodar nova migration para esta versão.
-
-
-## V3.6.2 - Layout e fluidez
-- Pente fino visual geral.
-- Login com textos mais profissionais para cliente.
-- Abas inferiores compactas para caber em uma linha.
-- Ajustes de espaçamento, botões, listas e formulários para uso mais fluido no celular.
+Não precisa rodar nova migration se a migration V3.6 de entregas já foi executada.
