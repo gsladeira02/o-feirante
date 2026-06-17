@@ -5,6 +5,7 @@ import {
   createDelivery,
   createDeliveryCustomer,
   deleteDeliveryCustomer,
+  updateDeliveryCustomer,
 } from '../services/api'
 import { money, qty } from '../utils/format'
 import { decimalInputProps, parseDecimal } from '../utils/number'
@@ -23,6 +24,7 @@ function formatDate(dateLike) {
 export default function Entregas({ user, products, customers, deliveries, reload, readOnly = false, onBlockedAction }) {
   const [message, setMessage] = useState('')
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
+  const [editingCustomerId, setEditingCustomerId] = useState('')
 
   const sortedCustomers = useMemo(() => [...customers].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')), [customers])
 
@@ -137,6 +139,34 @@ export default function Entregas({ user, products, customers, deliveries, reload
       form.reset()
       setSelectedCustomerId(customerId)
       setMessage('Entrega criada. Confirme quando ela for concluída.')
+      await reload()
+    } catch (error) {
+      setMessage(error.message)
+    }
+  }
+
+
+  function startEditCustomer(customer) {
+    setMessage('')
+    if (readOnly) return blocked()
+    setEditingCustomerId(customer.id)
+  }
+
+  async function submitCustomerEdit(event, customerId) {
+    event.preventDefault()
+    setMessage('')
+    if (readOnly) return blocked()
+
+    const form = event.currentTarget
+    const data = new FormData(form)
+    const name = String(data.get('name') || '').trim()
+    const address = String(data.get('address') || '').trim()
+    const phone = String(data.get('phone') || '').trim()
+
+    try {
+      await updateDeliveryCustomer({ id: customerId, name, address, phone })
+      setEditingCustomerId('')
+      setMessage('Dados do cliente atualizados.')
       await reload()
     } catch (error) {
       setMessage(error.message)
@@ -283,18 +313,40 @@ export default function Entregas({ user, products, customers, deliveries, reload
           {sortedCustomers.map((customer) => {
             const stat = customerStats.get(customer.id) || {}
             const active = selectedCustomerId === customer.id
+            const editing = editingCustomerId === customer.id
             return (
               <article className={`item-card editable-card ${active ? 'selected-client' : ''}`} key={customer.id}>
-                <div>
-                  <strong>{customer.name}</strong>
-                  <span>{customer.phone}</span>
-                  <small>{customer.address}</small>
-                  <small>{stat.deliveredCount || 0} compra{stat.deliveredCount === 1 ? '' : 's'} confirmada{stat.deliveredCount === 1 ? '' : 's'} · Total {money(stat.totalRevenue || 0)}</small>
-                </div>
-                <div className="card-actions">
-                  <button className="mini-filled" onClick={() => setSelectedCustomerId(customer.id)}>Histórico</button>
-                  <button className="mini-btn danger-text" onClick={() => handleDeleteCustomer(customer.id)}>Excluir</button>
-                </div>
+                {editing ? (
+                  <form className="inline-edit wide" onSubmit={(event) => submitCustomerEdit(event, customer.id)}>
+                    <label>Nome do cliente</label>
+                    <input name="name" defaultValue={customer.name || ''} autoComplete="off" required />
+
+                    <label>Endereço</label>
+                    <input name="address" defaultValue={customer.address || ''} autoComplete="off" required />
+
+                    <label>Telefone</label>
+                    <input name="phone" inputMode="tel" defaultValue={customer.phone || ''} autoComplete="off" required />
+
+                    <div className="inline-actions">
+                      <button type="button" className="mini-btn" onClick={() => setEditingCustomerId('')}>Cancelar</button>
+                      <button className="mini-filled">Salvar</button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div>
+                      <strong>{customer.name}</strong>
+                      <span>{customer.phone}</span>
+                      <small>{customer.address}</small>
+                      <small>{stat.deliveredCount || 0} compra{stat.deliveredCount === 1 ? '' : 's'} confirmada{stat.deliveredCount === 1 ? '' : 's'} · Total {money(stat.totalRevenue || 0)}</small>
+                    </div>
+                    <div className="card-actions">
+                      <button className="mini-filled" onClick={() => setSelectedCustomerId(customer.id)}>Histórico</button>
+                      <button className="mini-btn" onClick={() => startEditCustomer(customer)}>Editar</button>
+                      <button className="mini-btn danger-text" onClick={() => handleDeleteCustomer(customer.id)}>Excluir</button>
+                    </div>
+                  </>
+                )}
               </article>
             )
           })}

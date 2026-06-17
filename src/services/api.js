@@ -88,6 +88,46 @@ export async function getOrCreateProfile(user) {
   return created
 }
 
+
+export async function updateProfileData(profile) {
+  await ensureCanWrite()
+
+  const fullName = String(profile.full_name || '').trim()
+  const stallName = String(profile.stall_name || '').trim()
+  const city = String(profile.city || '').trim()
+  const state = String(profile.state || '').trim().toUpperCase()
+  const phone = String(profile.phone || '').replace(/\D/g, '')
+  const cpf = String(profile.cpf || '').replace(/\D/g, '')
+  const cnpj = String(profile.cnpj || '').replace(/\D/g, '')
+
+  if (!fullName) throw new Error('Informe o nome completo.')
+  if (cpf && cpf.length !== 11) throw new Error('Informe um CPF válido com 11 números.')
+  if (phone && phone.length < 10) throw new Error('Informe um celular válido com DDD.')
+  if (!city) throw new Error('Informe a cidade.')
+  if (!state || state.length !== 2) throw new Error('Informe a sigla do estado com 2 letras.')
+  if (!stallName) throw new Error('Informe o nome da banca.')
+  if (cnpj && cnpj.length !== 14) throw new Error('O CNPJ é opcional, mas se informado precisa ter 14 números.')
+
+  const payload = {
+    name: fullName,
+    full_name: fullName,
+    cpf: cpf || null,
+    birth_date: profile.birth_date || null,
+    phone: phone || null,
+    city,
+    state,
+    stall_name: stallName,
+    cnpj: cnpj || null,
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update(payload)
+    .eq('id', profile.id)
+
+  if (error) throw error
+}
+
 export async function changeFirstPassword(newPassword) {
   const { error: authError } = await supabase.auth.updateUser({ password: newPassword })
   if (authError) throw authError

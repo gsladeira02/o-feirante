@@ -30,6 +30,7 @@ import Historico from './pages/Historico'
 import Inteligencia from './pages/Inteligencia'
 import Admin from './pages/Admin'
 import Entregas from './pages/Entregas'
+import Perfil from './pages/Perfil'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -177,7 +178,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Header onLogout={handleLogout} isDemoAccount={isDemoAccount} />
+      <Header onLogout={handleLogout} isDemoAccount={isDemoAccount} onProfileClick={() => setPage('perfil')} />
 
       {isDemoAccount && (
         <section className="demo-banner">
@@ -261,6 +262,11 @@ export default function App() {
 
       {page === 'inteligencia' && (
         <Inteligencia fairs={fairs} fairPlaces={fairPlaces} />
+      )}
+
+
+      {page === 'perfil' && (
+        <Perfil user={user} profile={profile} reload={loadData} readOnly={isDemoAccount} onBlockedAction={showDemoMessage} />
       )}
 
       {page === 'admin' && isAdmin && (
