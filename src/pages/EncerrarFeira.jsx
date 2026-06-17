@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { closeFair, updateFairTaken } from '../services/api'
 import { money, qty } from '../utils/format'
 import { decimalInputProps, parseDecimal } from '../utils/number'
@@ -10,11 +10,28 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
     .map((item) => ({
       ...item,
       quantity_taken: String(item.quantity_taken ?? ''),
+      __original_quantity_taken: String(item.quantity_taken ?? ''),
       quantity_returned: '',
       quantity_lost: '',
     })))
   const [showSummary, setShowSummary] = useState(false)
   const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setItems((activeFair?.fair_items || [])
+      .slice()
+      .sort((a, b) => String(a.product_name || '').localeCompare(String(b.product_name || ''), 'pt-BR'))
+      .map((item) => ({
+        ...item,
+        quantity_taken: String(item.quantity_taken ?? ''),
+        __original_quantity_taken: String(item.quantity_taken ?? ''),
+        quantity_returned: '',
+        quantity_lost: '',
+      })))
+    setShowSummary(false)
+    setMessage('')
+  }, [activeFair?.id])
 
   const totals = useMemo(() => {
     return items.reduce((acc, item) => {
@@ -106,6 +123,7 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
 
   async function confirmClose() {
     setMessage('')
+    if (saving) return
 
     if (readOnly) {
       setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Encerrar feira está bloqueado.')
@@ -119,11 +137,15 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
     }
 
     try {
+      setSaving(true)
       await closeFair({ fair: activeFair, closingItems: items })
-      await reload()
+      setMessage('Feira encerrada com sucesso.')
       setPage('historico')
+      await reload()
     } catch (error) {
-      setMessage(error.message)
+      setMessage(error.message || 'Não foi possível encerrar a feira. Revise os campos e tente novamente.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -189,12 +211,12 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
               <div><small>Lucro</small><strong>{money(totals.profit)}</strong></div>
               <div><small>Perdas</small><strong>{money(totals.lossValue)}</strong></div>
             </div>
-            <button type="button" className="primary-btn" onClick={confirmClose}>Confirmar e salvar</button>
+            <button type="button" className="primary-btn" onClick={confirmClose} disabled={saving}>{saving ? 'Salvando...' : 'Confirmar e salvar'}</button>
           </section>
         )}
 
         {!showSummary && (
-          <button className="primary-btn sticky-btn">Ver resumo</button>
+          <button className="primary-btn sticky-btn" disabled={saving}>Ver resumo</button>
         )}
       </form>
     </main>

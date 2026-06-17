@@ -45,3 +45,14 @@ Observação: o parcelamento aparece na comunicação do plano e depende das op�
 - Botão Dados cadastrais visível no topo.
 - Atalho Dados cadastrais nas ações rápidas do início.
 - Mantém edição de dados cadastrais da banca e clientes.
+
+
+## V3.6.7 — Correção ao encerrar feira
+
+- Corrige o fluxo de encerramento de feira.
+- Melhora a mensagem de erro quando algum item não salva.
+- Mantém o botão em estado "Salvando..." durante o fechamento.
+- Ao confirmar, fecha a feira e envia o usuário para o histórico.
+- O ajuste de estoque ao alterar o campo Levou ficou mais tolerante para não impedir o encerramento por diferença de estoque.
+
+Não precisa rodar nova migration no Supabase.

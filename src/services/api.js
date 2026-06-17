@@ -357,10 +357,32 @@ export async function closeFair({ fair, closingItems }) {
   let profitTotal = 0
   let lossTotal = 0
 
+  const productIds = closingItems
+    .map((item) => item.product_id)
+    .filter(Boolean)
+
+  const { data: productsData, error: productsReadError } = await supabase
+    .from('products')
+    .select('id, stock')
+    .in('id', productIds)
+
+  if (productsReadError) throw productsReadError
+
+  const productsById = new Map((productsData || []).map((product) => [product.id, product]))
+
   for (const item of closingItems) {
     const taken = parseDecimal(item.quantity_taken)
     const returned = parseDecimal(item.quantity_returned)
     const lost = parseDecimal(item.quantity_lost)
+
+    if (taken < 0 || returned < 0 || lost < 0) {
+      throw new Error(`Revise as quantidades de ${item.product_name}. Não use valores negativos.`)
+    }
+
+    if (returned + lost > taken) {
+      throw new Error(`${item.product_name}: voltou + perdeu não pode ser maior que a quantidade levada.`)
+    }
+
     const sold = Math.max(taken - returned - lost, 0)
     const revenue = sold * parseDecimal(item.sale_price_at_time)
     const cost = sold * parseDecimal(item.cost_at_time)
@@ -372,16 +394,15 @@ export async function closeFair({ fair, closingItems }) {
     profitTotal += profit
     lossTotal += lossValue
 
-    const { data: currentItem, error: itemReadError } = await supabase
-      .from('fair_items')
-      .select('quantity_taken')
-      .eq('id', item.id)
-      .single()
-
-    if (itemReadError) throw itemReadError
-
-    const oldTaken = parseDecimal(currentItem.quantity_taken)
+    const oldTaken = parseDecimal(item.__original_quantity_taken ?? item.original_quantity_taken ?? item.quantity_taken_original ?? item.quantity_taken)
     const diffTaken = taken - oldTaken
+
+    const product = productsById.get(item.product_id)
+    if (product) {
+      const currentStock = parseDecimal(product.stock)
+      const adjustedStock = Math.max(currentStock - diffTaken + returned, 0)
+      productsById.set(item.product_id, { ...product, stock: adjustedStock })
+    }
 
     const { error: itemError } = await supabase
       .from('fair_items')
@@ -397,27 +418,21 @@ export async function closeFair({ fair, closingItems }) {
       })
       .eq('id', item.id)
 
-    if (itemError) throw itemError
-
-    if (diffTaken !== 0 || returned > 0) {
-      const { data: product, error: productReadError } = await supabase
-        .from('products')
-        .select('stock')
-        .eq('id', item.product_id)
-        .single()
-
-      if (productReadError) throw productReadError
-
-      const newStock = parseDecimal(product.stock) - diffTaken + returned
-      if (newStock < 0) throw new Error(`Estoque insuficiente para ajustar ${item.product_name}.`)
-
-      const { error: productError } = await supabase
-        .from('products')
-        .update({ stock: newStock })
-        .eq('id', item.product_id)
-
-      if (productError) throw productError
+    if (itemError) {
+      throw new Error(`Não foi possível salvar o item ${item.product_name}: ${itemError.message}`)
     }
+  }
+
+  for (const productId of productIds) {
+    const product = productsById.get(productId)
+    if (!product) continue
+
+    const { error: productError } = await supabase
+      .from('products')
+      .update({ stock: parseDecimal(product.stock) })
+      .eq('id', productId)
+
+    if (productError) throw new Error(`Não foi possível atualizar o estoque: ${productError.message}`)
   }
 
   const { error } = await supabase
@@ -431,8 +446,9 @@ export async function closeFair({ fair, closingItems }) {
       closed_at: new Date().toISOString(),
     })
     .eq('id', fair.id)
+    .eq('status', 'active')
 
-  if (error) throw error
+  if (error) throw new Error(`Não foi possível encerrar a feira: ${error.message}`)
 }
 
 export async function getClosedFairs(userId) {
