@@ -17,3 +17,15 @@ Suba os arquivos da pasta do projeto na raiz do GitHub. Não suba a pasta inteir
 ## Supabase
 
 Não precisa rodar nova migration se a migration V3.6 de entregas já foi executada.
+
+
+## V3.6.4 - Nova tabela de preços
+
+Planos atualizados para novos clientes:
+
+- Mensal: R$ 19,90/mês
+- Trimestral: R$ 54,90 ou 3x de R$ 18,30
+- Semestral: R$ 99,90 ou 6x de R$ 16,65
+- Anual: R$ 179,90 ou 12x de R$ 14,99
+
+Observação: o parcelamento aparece na comunicação do plano e depende das opções liberadas no checkout InfinitePay. O valor enviado ao checkout continua sendo o valor total do plano escolhido.
