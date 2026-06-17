@@ -1,7 +1,7 @@
 {
-  "name": "o-feirante-v3-6-1-ajuste-levou",
+  "name": "o-feirante-v3-6-2-layout-fluido",
   "private": true,
-  "version": "3.6.1",
+  "version": "3.6.2",
   "type": "module",
   "scripts": {
     "dev": "vite",

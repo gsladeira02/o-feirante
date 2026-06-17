@@ -17,3 +17,10 @@ Suba os arquivos da raiz desta pasta para o GitHub. Não suba o ZIP fechado e n�
 ## Supabase
 
 Não precisa rodar nova migration para esta versão.
+
+
+## V3.6.2 - Layout e fluidez
+- Pente fino visual geral.
+- Login com textos mais profissionais para cliente.
+- Abas inferiores compactas para caber em uma linha.
+- Ajustes de espaçamento, botões, listas e formulários para uso mais fluido no celular.

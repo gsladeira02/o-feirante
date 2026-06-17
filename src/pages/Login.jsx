@@ -67,7 +67,7 @@ export default function Login({ onLogin }) {
     setMessage('')
 
     if (!hasSupabaseConfig) {
-      setMessage('Configure as variáveis do Supabase na Vercel.')
+      setMessage('Não foi possível conectar ao sistema agora. Tente novamente em alguns instantes.')
       return
     }
 
@@ -88,7 +88,7 @@ export default function Login({ onLogin }) {
     setSignupMessage('')
 
     if (!hasSupabaseConfig) {
-      setSignupMessage('Configure as variáveis do Supabase antes de receber cadastros.')
+      setSignupMessage('Não foi possível iniciar seu cadastro agora. Tente novamente em alguns instantes.')
       return
     }
 
@@ -188,7 +188,7 @@ export default function Login({ onLogin }) {
       {paymentSuccess && (
         <section className="success-box">
           <strong>Pagamento enviado</strong>
-          <span>Recebemos o retorno do checkout. Seu acesso será liberado após a confirmação do pagamento.</span>
+          <span>Recebemos o retorno do pagamento. Seu acesso será liberado após a confirmação.</span>
         </section>
       )}
 
@@ -268,7 +268,7 @@ export default function Login({ onLogin }) {
           {signupMessage && <p className="message">{signupMessage}</p>}
 
           <button className="primary-btn" disabled={signupLoading}>{signupLoading ? 'Gerando pagamento...' : 'Ir para pagamento'}</button>
-          <p className="access-note">Após a confirmação do pagamento, o acesso será liberado. O sistema identifica seu plano e bloqueia automaticamente após 3 dias do vencimento em caso de não pagamento.</p>
+          <p className="access-note">Após a confirmação do pagamento, seu acesso será liberado conforme o plano escolhido.</p>
           <p className="legal-note">
             Ao assinar, você concorda com os{' '}
             <button type="button" onClick={() => setLegalView('terms')}>Termos de Uso</button>
@@ -290,7 +290,7 @@ export default function Login({ onLogin }) {
 
           <button className="primary-btn" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
           <button type="button" className="secondary-btn" onClick={() => setMode('signup')}>Ainda não tenho acesso</button>
-          <p className="access-note">Sua conta é criada pelo administrador após a assinatura.</p>
+          <p className="access-note">Assine um plano para receber seu acesso ao sistema.</p>
           <p className="legal-note">
             Ao acessar o O Feirante, você concorda com os{' '}
             <button type="button" onClick={() => setLegalView('terms')}>Termos de Uso</button>

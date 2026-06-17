@@ -65,7 +65,7 @@ export default function Admin() {
       setClients(data)
       setSignups(signupData)
     } catch (error) {
-      setMessage(error.message || 'Não foi possível carregar o painel admin.')
+      setMessage(error.message || 'Não foi possível carregar o painel de gestão.')
     } finally {
       setLoading(false)
     }
@@ -150,7 +150,7 @@ export default function Admin() {
         plan_name: client.plan_name,
         billing_interval_months: client.billing_interval_months,
         current_period_end: client.current_period_end,
-        label: client.label || 'Bloqueado pelo admin',
+        label: client.label || 'Bloqueado manualmente',
       })
       await loadClients()
     } catch (error) {
@@ -187,7 +187,7 @@ export default function Admin() {
     <main className="page admin-page">
       <div className="admin-title-row">
         <div>
-          <h2>Painel Admin</h2>
+          <h2>Painel de Gestão</h2>
           <p className="muted">Área privada para acompanhar clientes, acessos, planos e vencimentos.</p>
         </div>
         <button className="mini-filled" onClick={loadClients}>Atualizar</button>

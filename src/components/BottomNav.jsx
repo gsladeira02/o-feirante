@@ -5,13 +5,13 @@ export default function BottomNav({ page, setPage, isAdmin = false }) {
     { id: 'dashboard', label: 'Início', icon: BarChart3 },
     { id: 'estoque', label: 'Estoque', icon: Boxes },
     { id: 'feiras', label: 'Feiras', icon: MapPinned },
-    { id: 'entregas', label: 'Entregas', icon: Truck },
+    { id: 'entregas', label: 'Entrega', icon: Truck },
     { id: 'inteligencia', label: 'Análise', icon: Brain },
     { id: 'historico', label: 'Hist.', icon: History },
   ]
 
   if (isAdmin) {
-    items.push({ id: 'admin', label: 'Admin', icon: ShieldCheck })
+    items.push({ id: 'admin', label: 'Gestão', icon: ShieldCheck })
   }
 
   return (
@@ -20,7 +20,7 @@ export default function BottomNav({ page, setPage, isAdmin = false }) {
         const Icon = item.icon
         return (
           <button key={item.id} className={page === item.id ? 'nav-item active' : 'nav-item'} onClick={() => setPage(item.id)}>
-            <Icon size={17} />
+            <Icon size={16} strokeWidth={2.4} />
             <span>{item.label}</span>
           </button>
         )

@@ -1045,3 +1045,204 @@ summary { color: var(--green); font-weight: 900; cursor: pointer; }
   .nav-item { min-height: 45px; }
   .bottom-nav { width: 99vw; padding: 4px; }
 }
+
+/* V3.6.2 - Pente fino de layout e fluidez mobile */
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: auto;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
+  min-height: 46px;
+}
+
+.app-shell {
+  padding: 14px 12px 86px;
+}
+
+.topbar {
+  padding: 8px 0 12px;
+}
+
+.topbar h1 {
+  font-size: 22px;
+  line-height: 1.05;
+}
+
+.header-brand img {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+}
+
+.page h2 {
+  font-size: 24px;
+  margin: 6px 0 8px;
+  letter-spacing: -.03em;
+}
+
+.hero,
+.item-card,
+.form-card,
+.stat-card,
+.summary-card,
+.data-card,
+.admin-client-card,
+.brand-card,
+.success-box,
+.plan-card {
+  border-radius: 22px;
+}
+
+.item-card,
+.form-card,
+.stat-card,
+.summary-card,
+.data-card,
+.admin-client-card {
+  box-shadow: 0 8px 24px rgba(23, 32, 24, .055);
+}
+
+.primary-btn,
+.secondary-btn,
+.mini-btn,
+.icon-btn,
+.danger-btn,
+.ghost-btn {
+  min-height: 44px;
+}
+
+.row {
+  gap: 10px;
+}
+
+.list {
+  gap: 10px;
+}
+
+.category-group {
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.category-group h3 {
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.sticky-btn {
+  bottom: 78px;
+}
+
+.bottom-nav {
+  width: min(98vw, 540px);
+  bottom: 7px;
+  border-radius: 18px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.nav-item {
+  min-height: 42px;
+  border-radius: 13px;
+  gap: 0;
+  padding: 3px 1px;
+  font-size: 8px;
+  letter-spacing: -.03em;
+}
+
+.nav-item span {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.05;
+}
+
+.nav-item svg {
+  margin-bottom: 1px;
+}
+
+.legal-note,
+.access-note {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.plans-grid {
+  gap: 10px;
+}
+
+.signup-card label,
+.form-card label {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.message {
+  line-height: 1.35;
+}
+
+@media (max-width: 420px) {
+  .login-screen {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .brand-card {
+    padding: 22px;
+  }
+
+  .brand-card h1 {
+    font-size: 31px;
+  }
+
+  .app-shell {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .bottom-nav {
+    width: calc(100vw - 8px);
+  }
+
+  .nav-item {
+    min-height: 40px;
+    font-size: 7.5px;
+  }
+
+  .nav-item span {
+    font-size: 7.5px;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-item {
+    min-height: 38px;
+    padding: 2px 0;
+  }
+
+  .nav-item span {
+    font-size: 7px;
+  }
+}
