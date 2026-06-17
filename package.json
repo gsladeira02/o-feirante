@@ -1,7 +1,7 @@
 {
-  "name": "o-feirante-v3-6-4-precos",
+  "name": "o-feirante-v3-6-5-dados-cadastrais",
   "private": true,
-  "version": "3.6.4",
+  "version": "3.6.5",
   "type": "module",
   "scripts": {
     "dev": "vite",

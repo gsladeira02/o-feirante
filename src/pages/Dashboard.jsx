@@ -54,6 +54,7 @@ export default function Dashboard({ products, fairs, activeFair, setPage }) {
           <button onClick={() => setPage('entregas')}>Entregas</button>
           <button onClick={() => setPage('historico')}>Histórico</button>
           <button onClick={() => setPage('inteligencia')}>Inteligência</button>
+          <button onClick={() => setPage('perfil')}>Dados cadastrais</button>
         </div>
       </section>
     </main>
