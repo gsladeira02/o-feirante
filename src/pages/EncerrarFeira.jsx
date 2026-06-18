@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { closeFair, getItemCategoryName, sortFairItemsByCategoryName, updateFairTaken } from '../services/api'
+import { closeFair, getItemCategoryName, hasClosingData, sortFairItemsByCategoryName, updateFairTaken } from '../services/api'
 import { money, qty } from '../utils/format'
 import { decimalInputProps, parseDecimal } from '../utils/number'
 
@@ -72,6 +72,30 @@ export default function EncerrarFeira({ activeFair, reload, setPage, onClosed, r
       <main className="page">
         <h2>Nenhuma feira em andamento</h2>
         <button className="primary-btn" onClick={() => setPage('feiras')}>Iniciar uma feira</button>
+      </main>
+    )
+  }
+
+  const alreadyClosed = activeFair.status !== 'active' || Boolean(activeFair.closed_at) || hasClosingData(activeFair)
+
+  if (alreadyClosed) {
+    return (
+      <main className="page">
+        <h2>Feira já encerrada</h2>
+        <section className="selected-fair-card">
+          <strong>{activeFair.name}</strong>
+          <span>Essa feira já foi salva no histórico. Para evitar duplicidade, ela não pode ser encerrada novamente.</span>
+        </section>
+        <button className="primary-btn" onClick={() => {
+          onClosed?.()
+          reload?.()
+          setPage('historico')
+        }}>Ver histórico</button>
+        <button className="secondary-btn full-width" onClick={() => {
+          onClosed?.()
+          reload?.()
+          setPage('dashboard')
+        }}>Voltar para início</button>
       </main>
     )
   }

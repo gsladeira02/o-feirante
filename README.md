@@ -1,3 +1,14 @@
+# O Feirante V3.6.11
+
+Correções:
+- Feira já encerrada não aparece mais com ação de encerrar novamente.
+- Se uma feira estiver no histórico, o app bloqueia o reencerramento para evitar duplicidade.
+- Limpeza de feiras antigas que ficaram como ativas no banco.
+- Mantida ordenação por categoria e ordem alfabética no encerramento e histórico.
+
+Rode no Supabase:
+`supabase/migration-v3-6-11-limpar-feiras-duplicadas.sql`
+
 # O Feirante — V3.6.3
 
 Versão com histórico de compras por cliente na aba Entregas.

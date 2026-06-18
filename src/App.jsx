@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { hasSupabaseConfig, supabase } from './supabase'
 import {
   getActiveFair,
+  hasClosingData,
   getCategories,
   getClosedFairs,
   getDeliveries,
@@ -72,13 +73,18 @@ export default function App() {
       getActiveFair(currentUser.id),
     ])
 
+    const closedFairIds = new Set((fairsData || []).map((fair) => fair.id))
+    const safeActiveFair = activeFairData && !closedFairIds.has(activeFairData.id) && activeFairData.status === 'active' && !activeFairData.closed_at && !hasClosingData(activeFairData)
+      ? activeFairData
+      : null
+
     setProducts(productsData)
     setCategories(categoriesData)
     setFairPlaces(fairPlacesData)
     setCustomers(customersData)
     setDeliveries(deliveriesData)
     setFairs(fairsData)
-    setActiveFair(activeFairData)
+    setActiveFair(safeActiveFair)
   }
 
   useEffect(() => {

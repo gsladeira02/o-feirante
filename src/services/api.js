@@ -303,7 +303,7 @@ export async function registerPurchase({ userId, product, quantity, totalValue }
   if (productError) throw productError
 }
 
-function hasClosingData(fair = {}) {
+export function hasClosingData(fair = {}) {
   const totals = ['revenue_total', 'cost_total', 'profit_total', 'loss_total']
   if (fair.closed_at) return true
   if (totals.some((field) => Math.abs(parseDecimal(fair[field])) > 0.0001)) return true
@@ -316,6 +316,15 @@ function hasClosingData(fair = {}) {
     Math.abs(parseDecimal(item.profit)) > 0.0001 ||
     Math.abs(parseDecimal(item.loss_value)) > 0.0001
   ))
+}
+
+
+
+export function isFairAlreadyClosed(fair = {}) {
+  if (!fair) return false
+  if (fair.status && fair.status !== 'active') return true
+  if (fair.closed_at) return true
+  return hasClosingData(fair)
 }
 
 function getFairTotalsFromItems(fair = {}) {

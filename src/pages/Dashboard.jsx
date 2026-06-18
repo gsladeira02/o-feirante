@@ -1,7 +1,9 @@
 import { money } from '../utils/format'
+import { hasClosingData } from '../services/api'
 import { buildProductStats, getCurrentMonthTotals } from '../utils/analytics'
 
 export default function Dashboard({ products, fairs, activeFair, setPage }) {
+  const safeActiveFair = activeFair && activeFair.status === 'active' && !activeFair.closed_at && !hasClosingData(activeFair) ? activeFair : null
   const month = getCurrentMonthTotals(fairs)
   const productStats = buildProductStats(fairs)
   const topProduct = [...productStats].sort((a, b) => b.profit - a.profit)[0]
@@ -14,10 +16,10 @@ export default function Dashboard({ products, fairs, activeFair, setPage }) {
         <span>Lucro estimado: {money(month.profit)}</span>
       </section>
 
-      {activeFair ? (
+      {safeActiveFair ? (
         <button className="action-card danger" onClick={() => setPage('encerrar')}>
           <strong>Feira em andamento</strong>
-          <span>{activeFair.name}</span>
+          <span>{safeActiveFair.name}</span>
           <small>Toque para ajustar o que levou ou encerrar.</small>
         </button>
       ) : (
