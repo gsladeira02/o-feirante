@@ -20,6 +20,29 @@ export function sortProductsByCategoryName(products = []) {
   })
 }
 
+
+
+export function getItemCategoryName(item = {}) {
+  return item.products?.categories?.name || item.product?.categories?.name || item.category_name || item.categoryName || 'Sem categoria'
+}
+
+export function sortFairItemsByCategoryName(items = []) {
+  return [...items].sort((a, b) => {
+    const categoryA = normalizeText(getItemCategoryName(a))
+    const categoryB = normalizeText(getItemCategoryName(b))
+    if (categoryA !== categoryB) return categoryA.localeCompare(categoryB, 'pt-BR')
+    return normalizeText(a.product_name || a.name).localeCompare(normalizeText(b.product_name || b.name), 'pt-BR')
+  })
+}
+
+function normalizeFair(fair) {
+  if (!fair) return fair
+  return {
+    ...fair,
+    fair_items: sortFairItemsByCategoryName(fair.fair_items || []),
+  }
+}
+
 export async function getUserAccess(userId) {
   const { data, error } = await supabase
     .from('user_access')
@@ -254,15 +277,16 @@ export async function registerPurchase({ userId, product, quantity, totalValue }
 export async function getActiveFair(userId) {
   const { data, error } = await supabase
     .from('fairs')
-    .select('*, fair_items(*)')
+    .select('*, fair_items(*, products(name, category_id, categories(name)))')
     .eq('user_id', userId)
     .eq('status', 'active')
+    .is('closed_at', null)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
   if (error) throw error
-  return data
+  return normalizeFair(data)
 }
 
 export async function startFair({ userId, fairPlace, items }) {
@@ -446,7 +470,6 @@ export async function closeFair({ fair, closingItems }) {
       closed_at: new Date().toISOString(),
     })
     .eq('id', fair.id)
-    .eq('status', 'active')
 
   if (error) throw new Error(`Não foi possível encerrar a feira: ${error.message}`)
 }
@@ -454,13 +477,13 @@ export async function closeFair({ fair, closingItems }) {
 export async function getClosedFairs(userId) {
   const { data, error } = await supabase
     .from('fairs')
-    .select('*, fair_items(*), fair_places(name, address, weekday)')
+    .select('*, fair_items(*, products(name, category_id, categories(name))), fair_places(name, address, weekday)')
     .eq('user_id', userId)
     .eq('status', 'closed')
     .order('closed_at', { ascending: false })
 
   if (error) throw error
-  return data || []
+  return (data || []).map(normalizeFair)
 }
 
 

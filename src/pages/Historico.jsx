@@ -1,4 +1,19 @@
+import { getItemCategoryName, sortFairItemsByCategoryName } from '../services/api'
 import { dateBR, money, qty } from '../utils/format'
+
+function groupFairItems(items = []) {
+  const map = new Map()
+  sortFairItemsByCategoryName(items).forEach((item) => {
+    const categoryName = getItemCategoryName(item)
+    if (!map.has(categoryName)) map.set(categoryName, [])
+    map.get(categoryName).push(item)
+  })
+
+  return Array.from(map.entries()).map(([name, categoryItems]) => ({
+    name,
+    items: sortFairItemsByCategoryName(categoryItems),
+  }))
+}
 
 export default function Historico({ fairs }) {
   const groups = fairs.reduce((acc, fair) => {
@@ -43,8 +58,13 @@ export default function Historico({ fairs }) {
 
                   <details>
                     <summary>Ver produtos</summary>
-                    {(fair.fair_items || []).map((item) => (
-                      <p key={item.id}>{item.product_name}: vendeu {qty(item.quantity_sold)} {item.unit}</p>
+                    {groupFairItems(fair.fair_items || []).map((group) => (
+                      <div className="history-products-group" key={group.name}>
+                        <strong>{group.name}</strong>
+                        {group.items.map((item) => (
+                          <p key={item.id}>{item.product_name}: vendeu {qty(item.quantity_sold)} {item.unit}</p>
+                        ))}
+                      </div>
                     ))}
                   </details>
                 </article>

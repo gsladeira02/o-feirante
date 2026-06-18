@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { closeFair, updateFairTaken } from '../services/api'
+import { closeFair, getItemCategoryName, sortFairItemsByCategoryName, updateFairTaken } from '../services/api'
 import { money, qty } from '../utils/format'
 import { decimalInputProps, parseDecimal } from '../utils/number'
 
 export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = false, onBlockedAction }) {
-  const [items, setItems] = useState((activeFair?.fair_items || [])
-    .slice()
-    .sort((a, b) => String(a.product_name || '').localeCompare(String(b.product_name || ''), 'pt-BR'))
+  const [items, setItems] = useState(sortFairItemsByCategoryName(activeFair?.fair_items || [])
     .map((item) => ({
       ...item,
       quantity_taken: String(item.quantity_taken ?? ''),
@@ -19,9 +17,7 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setItems((activeFair?.fair_items || [])
-      .slice()
-      .sort((a, b) => String(a.product_name || '').localeCompare(String(b.product_name || ''), 'pt-BR'))
+    setItems(sortFairItemsByCategoryName(activeFair?.fair_items || [])
       .map((item) => ({
         ...item,
         quantity_taken: String(item.quantity_taken ?? ''),
@@ -54,6 +50,21 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
 
       return acc
     }, { sold: 0, returned: 0, lost: 0, revenue: 0, cost: 0, profit: 0, lossValue: 0 })
+  }, [items])
+
+  const groupedItems = useMemo(() => {
+    const map = new Map()
+
+    items.forEach((item) => {
+      const categoryName = getItemCategoryName(item)
+      if (!map.has(categoryName)) map.set(categoryName, [])
+      map.get(categoryName).push(item)
+    })
+
+    return Array.from(map.entries()).map(([name, categoryItems]) => ({
+      name,
+      items: sortFairItemsByCategoryName(categoryItems),
+    }))
   }, [items])
 
   if (!activeFair) {
@@ -139,9 +150,9 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
     try {
       setSaving(true)
       await closeFair({ fair: activeFair, closingItems: items })
+      await reload()
       setMessage('Feira encerrada com sucesso.')
       setPage('historico')
-      await reload()
     } catch (error) {
       setMessage(error.message || 'Não foi possível encerrar a feira. Revise os campos e tente novamente.')
     } finally {
@@ -160,38 +171,43 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
 
       <form onSubmit={preview}>
         <section className="list">
-          {items.map((item) => {
-            const taken = parseDecimal(item.quantity_taken)
-            const returned = parseDecimal(item.quantity_returned)
-            const lost = parseDecimal(item.quantity_lost)
-            const sold = Math.max(taken - returned - lost, 0)
+          {groupedItems.map((group) => (
+            <div className="category-group" key={group.name}>
+              <h3>{group.name}</h3>
+              {group.items.map((item) => {
+                const taken = parseDecimal(item.quantity_taken)
+                const returned = parseDecimal(item.quantity_returned)
+                const lost = parseDecimal(item.quantity_lost)
+                const sold = Math.max(taken - returned - lost, 0)
 
-            return (
-              <article className="close-card" key={item.id}>
-                <div className="close-header">
-                  <strong>{item.product_name}</strong>
-                  <span>{item.unit}</span>
-                </div>
+                return (
+                  <article className="close-card" key={item.id}>
+                    <div className="close-header">
+                      <strong>{item.product_name}</strong>
+                      <span>{item.unit}</span>
+                    </div>
 
-                <div className="row three-cols">
-                  <div>
-                    <label>Levou</label>
-                    <input {...decimalInputProps({ min: '0', value: item.quantity_taken, onChange: (e) => update(item.id, 'quantity_taken', e.target.value) })} />
-                  </div>
-                  <div>
-                    <label>Voltou</label>
-                    <input {...decimalInputProps({ min: '0', value: item.quantity_returned, onChange: (e) => update(item.id, 'quantity_returned', e.target.value) })} />
-                  </div>
-                  <div>
-                    <label>Perdeu</label>
-                    <input {...decimalInputProps({ min: '0', value: item.quantity_lost, onChange: (e) => update(item.id, 'quantity_lost', e.target.value) })} />
-                  </div>
-                </div>
+                    <div className="row three-cols">
+                      <div>
+                        <label>Levou</label>
+                        <input {...decimalInputProps({ min: '0', value: item.quantity_taken, onChange: (e) => update(item.id, 'quantity_taken', e.target.value) })} />
+                      </div>
+                      <div>
+                        <label>Voltou</label>
+                        <input {...decimalInputProps({ min: '0', value: item.quantity_returned, onChange: (e) => update(item.id, 'quantity_returned', e.target.value) })} />
+                      </div>
+                      <div>
+                        <label>Perdeu</label>
+                        <input {...decimalInputProps({ min: '0', value: item.quantity_lost, onChange: (e) => update(item.id, 'quantity_lost', e.target.value) })} />
+                      </div>
+                    </div>
 
-                <small className="calculated-line">Vendido calculado: {qty(sold)} {item.unit}</small>
-              </article>
-            )
-          })}
+                    <small className="calculated-line">Vendido calculado: {qty(sold)} {item.unit}</small>
+                  </article>
+                )
+              })}
+            </div>
+          ))}
         </section>
 
         {message && <p className="message">{message}</p>}

@@ -1418,3 +1418,16 @@ textarea {
     display: none;
   }
 }
+
+.history-products-group {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.history-products-group > strong {
+  display: block;
+  color: var(--green);
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}

@@ -56,3 +56,17 @@ Observação: o parcelamento aparece na comunicação do plano e depende das op�
 - O ajuste de estoque ao alterar o campo Levou ficou mais tolerante para não impedir o encerramento por diferença de estoque.
 
 Não precisa rodar nova migration no Supabase.
+
+## V3.6.8
+
+- Corrige feira encerrada que ainda aparecia como “Feira em andamento”.
+- A busca de feira ativa agora ignora registros já encerrados.
+- Produtos da tela Encerrar feira organizados por categoria e ordem alfabética.
+- Produtos no Histórico também organizados por categoria e ordem alfabética.
+- Inclui migration para corrigir clientes atuais com feiras encerradas que ficaram marcadas como ativas.
+
+Execute no Supabase:
+
+```txt
+supabase/migration-v3-6-8-corrigir-feiras-ativas.sql
+```
