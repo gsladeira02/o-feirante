@@ -253,7 +253,7 @@ export default function App() {
       )}
 
       {page === 'encerrar' && (
-        <EncerrarFeira activeFair={activeFair} reload={loadData} setPage={setPage} readOnly={isDemoAccount} onBlockedAction={showDemoMessage} />
+        <EncerrarFeira activeFair={activeFair} reload={loadData} setPage={setPage} onClosed={() => setActiveFair(null)} readOnly={isDemoAccount} onBlockedAction={showDemoMessage} />
       )}
 
       {page === 'historico' && (

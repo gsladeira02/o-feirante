@@ -3,7 +3,7 @@ import { closeFair, getItemCategoryName, sortFairItemsByCategoryName, updateFair
 import { money, qty } from '../utils/format'
 import { decimalInputProps, parseDecimal } from '../utils/number'
 
-export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = false, onBlockedAction }) {
+export default function EncerrarFeira({ activeFair, reload, setPage, onClosed, readOnly = false, onBlockedAction }) {
   const [items, setItems] = useState(sortFairItemsByCategoryName(activeFair?.fair_items || [])
     .map((item) => ({
       ...item,
@@ -150,7 +150,9 @@ export default function EncerrarFeira({ activeFair, reload, setPage, readOnly = 
     try {
       setSaving(true)
       await closeFair({ fair: activeFair, closingItems: items })
+      onClosed?.()
       await reload()
+      onClosed?.()
       setMessage('Feira encerrada com sucesso.')
       setPage('historico')
     } catch (error) {

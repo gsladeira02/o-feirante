@@ -4,6 +4,35 @@ import { parseDecimal } from '../utils/number'
 export const DEMO_ACCOUNT_MESSAGE = 'Esta é uma conta teste. As ações de cadastro, edição, exclusão, entrada de mercadoria e início/encerramento de feira estão bloqueadas para demonstração.'
 
 
+const CLOSED_FAIRS_KEY = 'o_feirante_closed_fairs_v1'
+
+function getLocallyClosedFairIds() {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(CLOSED_FAIRS_KEY)
+    const list = raw ? JSON.parse(raw) : []
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
+}
+
+export function markFairClosedLocally(fairId) {
+  if (!fairId || typeof window === 'undefined') return
+  try {
+    const list = getLocallyClosedFairIds()
+    if (!list.includes(fairId)) {
+      window.localStorage.setItem(CLOSED_FAIRS_KEY, JSON.stringify([...list, fairId].slice(-100)))
+    }
+  } catch {}
+}
+
+function isFairClosedLocally(fairId) {
+  return getLocallyClosedFairIds().includes(fairId)
+}
+
+
+
 function normalizeText(value = '') {
   return String(value || '')
     .normalize('NFD')
@@ -341,7 +370,7 @@ export async function getActiveFair(userId) {
 
   if (error) throw error
 
-  const trulyActive = (data || []).find((fair) => !hasClosingData(fair))
+  const trulyActive = (data || []).find((fair) => !isFairClosedLocally(fair.id) && !hasClosingData(fair))
   return normalizeFair(trulyActive || null)
 }
 
@@ -449,10 +478,21 @@ export async function closeFair({ fair, closingItems }) {
     p_items: payloadItems,
   })
 
-  if (!rpcError) return
+  if (!rpcError) {
+    const { data: checkedFair, error: checkError } = await supabase
+      .from('fairs')
+      .select('id, status, closed_at')
+      .eq('id', fair.id)
+      .maybeSingle()
 
-  const missingRpc = rpcError.code === 'PGRST202' || rpcError.message?.includes('close_fair_atomic')
-  if (!missingRpc) {
+    if (!checkError && checkedFair?.status === 'closed' && checkedFair?.closed_at) {
+      markFairClosedLocally(fair.id)
+      return
+    }
+  }
+
+  const missingRpc = rpcError?.code === 'PGRST202' || rpcError?.message?.includes('close_fair_atomic') || !rpcError
+  if (rpcError && !missingRpc) {
     throw new Error(`Não foi possível encerrar a feira: ${rpcError.message}`)
   }
 
@@ -556,6 +596,8 @@ export async function closeFair({ fair, closingItems }) {
   if (error || !updatedFair || updatedFair.status !== 'closed') {
     throw new Error(`Não foi possível encerrar a feira: ${error?.message || 'o status não foi atualizado.'}`)
   }
+
+  markFairClosedLocally(fair.id)
 }
 
 

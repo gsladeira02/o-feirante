@@ -57,7 +57,7 @@ Observação: o parcelamento aparece na comunicação do plano e depende das op�
 
 Não precisa rodar nova migration no Supabase.
 
-## V3.6.9
+## V3.6.8
 
 - Corrige feira encerrada que ainda aparecia como “Feira em andamento”.
 - A busca de feira ativa agora ignora registros já encerrados.
@@ -71,12 +71,10 @@ Execute no Supabase:
 supabase/migration-v3-6-8-corrigir-feiras-ativas.sql
 ```
 
+## V3.6.10 — correção reforçada de feira em andamento
 
-## V3.6.9
-
-- Correção definitiva para feira que permanecia em andamento após encerrar.
-- Encerramento de feira agora usa função transacional no Supabase quando a migration for rodada.
-- O app também limpa automaticamente feiras antigas que ficaram presas como ativas.
-- Produtos continuam ordenados por categoria e ordem alfabética no encerramento e histórico.
-
-Rodar no Supabase: `supabase/migration-v3-6-9-fechamento-definitivo.sql`.
+- O fechamento da feira agora verifica se o banco realmente marcou a feira como encerrada.
+- Se a função RPC existir mas não atualizar o status, o app usa o fechamento alternativo automaticamente.
+- Depois de encerrar, a feira é removida da tela inicial imediatamente.
+- O app guarda localmente o ID de feiras encerradas para impedir que uma feira já finalizada continue aparecendo como em andamento por cache ou dado antigo.
+- Produtos continuam ordenados por categoria e nome no encerramento e no histórico.
