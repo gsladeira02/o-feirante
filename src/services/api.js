@@ -369,17 +369,34 @@ export async function repairFinishedActiveFairs(userId) {
 export async function getActiveFair(userId) {
   await repairFinishedActiveFairs(userId)
 
-  const { data, error } = await supabase
-    .from('fairs')
-    .select('*, fair_items(*, products(name, category_id, categories(name)))')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .is('closed_at', null)
-    .order('created_at', { ascending: false })
+  const [{ data: activeData, error: activeError }, { data: closedData, error: closedError }] = await Promise.all([
+    supabase
+      .from('fairs')
+      .select('*, fair_items(*, products(name, category_id, categories(name)))')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .is('closed_at', null)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('fairs')
+      .select('id, user_id, fair_place_id, name, status, created_at, closed_at, revenue_total, cost_total, profit_total, loss_total, fair_items(*)')
+      .eq('user_id', userId)
+      .eq('status', 'closed')
+      .order('closed_at', { ascending: false })
+      .limit(80),
+  ])
 
-  if (error) throw error
+  if (activeError) throw activeError
+  if (closedError) throw closedError
 
-  const trulyActive = (data || []).find((fair) => !isFairClosedLocally(fair.id) && !hasClosingData(fair))
+  const closedFairs = (closedData || []).map(normalizeFair)
+  const candidates = (activeData || []).map(normalizeFair)
+  const trulyActive = candidates.find((fair) => (
+    !isFairClosedLocally(fair.id) &&
+    !hasClosingData(fair) &&
+    !isDuplicateOfClosedFair(fair, closedFairs)
+  ))
+
   return normalizeFair(trulyActive || null)
 }
 

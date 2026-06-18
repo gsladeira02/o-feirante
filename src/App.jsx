@@ -3,6 +3,7 @@ import { hasSupabaseConfig, supabase } from './supabase'
 import {
   getActiveFair,
   hasClosingData,
+  isDuplicateOfClosedFair,
   getCategories,
   getClosedFairs,
   getDeliveries,
@@ -74,9 +75,14 @@ export default function App() {
     ])
 
     const closedFairIds = new Set((fairsData || []).map((fair) => fair.id))
-    const safeActiveFair = activeFairData && !closedFairIds.has(activeFairData.id) && activeFairData.status === 'active' && !activeFairData.closed_at && !hasClosingData(activeFairData)
-      ? activeFairData
-      : null
+    const safeActiveFair = activeFairData &&
+      !closedFairIds.has(activeFairData.id) &&
+      activeFairData.status === 'active' &&
+      !activeFairData.closed_at &&
+      !hasClosingData(activeFairData) &&
+      !isDuplicateOfClosedFair(activeFairData, fairsData)
+        ? activeFairData
+        : null
 
     setProducts(productsData)
     setCategories(categoriesData)
