@@ -274,7 +274,63 @@ export async function registerPurchase({ userId, product, quantity, totalValue }
   if (productError) throw productError
 }
 
+function hasClosingData(fair = {}) {
+  const totals = ['revenue_total', 'cost_total', 'profit_total', 'loss_total']
+  if (fair.closed_at) return true
+  if (totals.some((field) => Math.abs(parseDecimal(fair[field])) > 0.0001)) return true
+  return (fair.fair_items || []).some((item) => (
+    parseDecimal(item.quantity_returned) > 0 ||
+    parseDecimal(item.quantity_lost) > 0 ||
+    parseDecimal(item.quantity_sold) > 0 ||
+    Math.abs(parseDecimal(item.revenue)) > 0.0001 ||
+    Math.abs(parseDecimal(item.cost)) > 0.0001 ||
+    Math.abs(parseDecimal(item.profit)) > 0.0001 ||
+    Math.abs(parseDecimal(item.loss_value)) > 0.0001
+  ))
+}
+
+function getFairTotalsFromItems(fair = {}) {
+  return (fair.fair_items || []).reduce((acc, item) => ({
+    revenue_total: acc.revenue_total + parseDecimal(item.revenue),
+    cost_total: acc.cost_total + parseDecimal(item.cost),
+    profit_total: acc.profit_total + parseDecimal(item.profit),
+    loss_total: acc.loss_total + parseDecimal(item.loss_value),
+  }), { revenue_total: 0, cost_total: 0, profit_total: 0, loss_total: 0 })
+}
+
+export async function repairFinishedActiveFairs(userId) {
+  if (!userId) return
+
+  const { data, error } = await supabase
+    .from('fairs')
+    .select('*, fair_items(*)')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  const staleFairs = (data || []).filter(hasClosingData)
+  for (const fair of staleFairs) {
+    const totals = getFairTotalsFromItems(fair)
+    await supabase
+      .from('fairs')
+      .update({
+        status: 'closed',
+        closed_at: fair.closed_at || new Date().toISOString(),
+        revenue_total: parseDecimal(fair.revenue_total) || totals.revenue_total,
+        cost_total: parseDecimal(fair.cost_total) || totals.cost_total,
+        profit_total: parseDecimal(fair.profit_total) || totals.profit_total,
+        loss_total: parseDecimal(fair.loss_total) || totals.loss_total,
+      })
+      .eq('id', fair.id)
+      .eq('user_id', userId)
+  }
+}
+
 export async function getActiveFair(userId) {
+  await repairFinishedActiveFairs(userId)
+
   const { data, error } = await supabase
     .from('fairs')
     .select('*, fair_items(*, products(name, category_id, categories(name)))')
@@ -282,11 +338,11 @@ export async function getActiveFair(userId) {
     .eq('status', 'active')
     .is('closed_at', null)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
   if (error) throw error
-  return normalizeFair(data)
+
+  const trulyActive = (data || []).find((fair) => !hasClosingData(fair))
+  return normalizeFair(trulyActive || null)
 }
 
 export async function startFair({ userId, fairPlace, items }) {
@@ -376,6 +432,30 @@ export async function updateFairTaken({ closingItems }) {
 
 export async function closeFair({ fair, closingItems }) {
   await ensureCanWrite()
+
+  const payloadItems = closingItems.map((item) => ({
+    id: item.id,
+    product_id: item.product_id,
+    product_name: item.product_name,
+    quantity_taken: parseDecimal(item.quantity_taken),
+    quantity_returned: parseDecimal(item.quantity_returned),
+    quantity_lost: parseDecimal(item.quantity_lost),
+    cost_at_time: parseDecimal(item.cost_at_time),
+    sale_price_at_time: parseDecimal(item.sale_price_at_time),
+  }))
+
+  const { error: rpcError } = await supabase.rpc('close_fair_atomic', {
+    p_fair_id: fair.id,
+    p_items: payloadItems,
+  })
+
+  if (!rpcError) return
+
+  const missingRpc = rpcError.code === 'PGRST202' || rpcError.message?.includes('close_fair_atomic')
+  if (!missingRpc) {
+    throw new Error(`Não foi possível encerrar a feira: ${rpcError.message}`)
+  }
+
   let revenueTotal = 0
   let costTotal = 0
   let profitTotal = 0
@@ -459,7 +539,7 @@ export async function closeFair({ fair, closingItems }) {
     if (productError) throw new Error(`Não foi possível atualizar o estoque: ${productError.message}`)
   }
 
-  const { error } = await supabase
+  const { data: updatedFair, error } = await supabase
     .from('fairs')
     .update({
       status: 'closed',
@@ -470,9 +550,14 @@ export async function closeFair({ fair, closingItems }) {
       closed_at: new Date().toISOString(),
     })
     .eq('id', fair.id)
+    .select('id, status, closed_at')
+    .single()
 
-  if (error) throw new Error(`Não foi possível encerrar a feira: ${error.message}`)
+  if (error || !updatedFair || updatedFair.status !== 'closed') {
+    throw new Error(`Não foi possível encerrar a feira: ${error?.message || 'o status não foi atualizado.'}`)
+  }
 }
+
 
 export async function getClosedFairs(userId) {
   const { data, error } = await supabase
