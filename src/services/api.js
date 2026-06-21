@@ -5,6 +5,7 @@ export const DEMO_ACCOUNT_MESSAGE = 'Esta é uma conta teste. As ações de cada
 
 
 const CLOSED_FAIRS_KEY = 'o_feirante_closed_fairs_v1'
+const CLOSED_FAIR_SIGNATURES_KEY = 'o_feirante_closed_fair_signatures_v1'
 
 function getLocallyClosedFairIds() {
   if (typeof window === 'undefined') return []
@@ -17,13 +18,14 @@ function getLocallyClosedFairIds() {
   }
 }
 
-export function markFairClosedLocally(fairId) {
+export function markFairClosedLocally(fairId, fair = null) {
   if (!fairId || typeof window === 'undefined') return
   try {
     const list = getLocallyClosedFairIds()
     if (!list.includes(fairId)) {
       window.localStorage.setItem(CLOSED_FAIRS_KEY, JSON.stringify([...list, fairId].slice(-100)))
     }
+    if (fair) markFairSignatureClosedLocally(fair)
   } catch {}
 }
 
@@ -32,6 +34,42 @@ function isFairClosedLocally(fairId) {
 }
 
 
+
+
+function fairSignature(fair = {}) {
+  const date = String(fair.closed_at || fair.created_at || '').slice(0, 10)
+  const place = fair.fair_place_id || ''
+  const name = normalizeText(fair.name || '')
+  return `${date}|${place}|${name}`
+}
+
+function getLocallyClosedFairSignatures() {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(CLOSED_FAIR_SIGNATURES_KEY)
+    const list = raw ? JSON.parse(raw) : []
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
+}
+
+function markFairSignatureClosedLocally(fair) {
+  if (!fair || typeof window === 'undefined') return
+  const signature = fairSignature(fair)
+  if (!signature || signature === '||') return
+  try {
+    const list = getLocallyClosedFairSignatures()
+    if (!list.includes(signature)) {
+      window.localStorage.setItem(CLOSED_FAIR_SIGNATURES_KEY, JSON.stringify([...list, signature].slice(-150)))
+    }
+  } catch {}
+}
+
+function isFairSignatureClosedLocally(fair) {
+  const signature = fairSignature(fair)
+  return Boolean(signature && getLocallyClosedFairSignatures().includes(signature))
+}
 
 function normalizeText(value = '') {
   return String(value || '')
@@ -363,7 +401,7 @@ export async function repairFinishedActiveFairs(userId) {
       })
       .eq('id', fair.id)
       .eq('user_id', userId)
-    markFairClosedLocally(fair.id)
+    markFairClosedLocally(fair.id, { ...fair, status: 'closed', closed_at: fair.closed_at || new Date().toISOString() })
   }
 
   // Depois de corrigir feiras com dados de fechamento, esconda qualquer registro
@@ -384,6 +422,8 @@ export async function repairFinishedActiveFairs(userId) {
 export function isDuplicateOfClosedFair(activeFair = {}, closedFairs = []) {
   if (!activeFair || !Array.isArray(closedFairs) || !closedFairs.length) return false
 
+  if (isFairSignatureClosedLocally(activeFair)) return true
+
   const activePlaceId = activeFair.fair_place_id || ''
   const activeName = normalizeText(activeFair.name || '')
   const activeCreatedAt = activeFair.created_at ? new Date(activeFair.created_at).getTime() : 0
@@ -401,11 +441,12 @@ export function isDuplicateOfClosedFair(activeFair = {}, closedFairs = []) {
     const sameName = activeName && closedName && activeName === closedName
     const sameDate = activeDate && (activeDate === closedCreatedDate || activeDate === closedAtDate)
     const closedAfterActiveStarted = Boolean(activeCreatedAt && closedAt && closedAt >= activeCreatedAt)
+    const closeTimeDistanceHours = activeCreatedAt && closedAt ? Math.abs(closedAt - activeCreatedAt) / 36e5 : 9999
 
-    // Regra principal: se uma feira do mesmo local/nome já foi encerrada depois
-    // que esse registro ativo foi criado, esse registro ativo é lixo/duplicado.
-    // A regra de mesma data cobre bases antigas sem horários consistentes.
-    return (samePlace || sameName) && (closedAfterActiveStarted || sameDate)
+    // Regra reforçada: se já existe uma feira encerrada do mesmo local/nome
+    // no mesmo dia ou dentro de uma janela curta, qualquer registro active é tratado
+    // como sobra/duplicidade, evitando botão de encerrar duas vezes.
+    return (samePlace || sameName) && (closedAfterActiveStarted || sameDate || closeTimeDistanceHours <= 36)
   })
 }
 
@@ -435,7 +476,7 @@ async function archiveDuplicateActiveFairs(userId, closedFairs = []) {
 
   if (updateError) throw updateError
 
-  duplicateIds.forEach(markFairClosedLocally)
+  (activeData || []).filter((fair) => duplicateIds.includes(fair.id)).forEach((fair) => markFairClosedLocally(fair.id, fair))
 }
 
 export async function getActiveFair(userId) {
@@ -465,6 +506,7 @@ export async function getActiveFair(userId) {
   const candidates = (activeData || []).map(normalizeFair)
   const trulyActive = candidates.find((fair) => (
     !isFairClosedLocally(fair.id) &&
+    !isFairSignatureClosedLocally(fair) &&
     !hasClosingData(fair) &&
     !isDuplicateOfClosedFair(fair, closedFairs)
   ))
@@ -584,7 +626,7 @@ export async function closeFair({ fair, closingItems }) {
       .maybeSingle()
 
     if (!checkError && checkedFair?.status === 'closed' && checkedFair?.closed_at) {
-      markFairClosedLocally(fair.id)
+      markFairClosedLocally(fair.id, { ...fair, ...checkedFair })
       await archiveDuplicateActiveFairs(fair.user_id, [normalizeFair({ ...fair, ...checkedFair })])
       return
     }
@@ -696,7 +738,7 @@ export async function closeFair({ fair, closingItems }) {
     throw new Error(`Não foi possível encerrar a feira: ${error?.message || 'o status não foi atualizado.'}`)
   }
 
-  markFairClosedLocally(fair.id)
+  markFairClosedLocally(fair.id, { ...fair, status: 'closed', closed_at: updatedFair.closed_at })
   await archiveDuplicateActiveFairs(fair.user_id, [normalizeFair({ ...fair, status: 'closed', closed_at: updatedFair.closed_at })])
 }
 

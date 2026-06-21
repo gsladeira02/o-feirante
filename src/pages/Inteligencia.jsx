@@ -3,9 +3,18 @@ import { buildFairStats, buildMonthlyStats, buildProductStats, buildSuggestions,
 import { money, qty } from '../utils/format'
 import { decimalInputProps, parseDecimal } from '../utils/number'
 
-export default function Inteligencia({ fairs, fairPlaces }) {
+function normalizeText(value = '') {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+}
+
+export default function Inteligencia({ fairs, fairPlaces, products = [], onAcceptSuggestion }) {
   const [goal, setGoal] = useState(() => localStorage.getItem('ofeirante_meta_mensal') || '')
   const [selectedFairPlace, setSelectedFairPlace] = useState('')
+  const [suggestionMessage, setSuggestionMessage] = useState('')
 
   const productStats = useMemo(() => buildProductStats(fairs), [fairs])
   const fairStats = useMemo(() => buildFairStats(fairs), [fairs])
@@ -24,6 +33,59 @@ export default function Inteligencia({ fairs, fairPlaces }) {
   function saveGoal(value) {
     setGoal(value)
     localStorage.setItem('ofeirante_meta_mensal', value)
+  }
+
+  function acceptSuggestion() {
+    setSuggestionMessage('')
+
+    if (!selectedFairPlace) {
+      setSuggestionMessage('Escolha uma feira específica antes de aceitar a sugestão.')
+      return
+    }
+
+    if (!suggestions.length) {
+      setSuggestionMessage('Ainda não há sugestão suficiente para essa feira.')
+      return
+    }
+
+    const productsByName = new Map(products.map((product) => [normalizeText(product.name), product]))
+    const quantities = {}
+    const stockWarnings = []
+    let filledCount = 0
+
+    suggestions.forEach((suggestion) => {
+      const product = productsByName.get(normalizeText(suggestion.name))
+      if (!product) return
+
+      const suggestedQty = parseDecimal(suggestion.suggested)
+      const stockQty = parseDecimal(product.stock)
+      const finalQty = Math.max(Math.min(suggestedQty, stockQty), 0)
+
+      if (finalQty > 0) {
+        quantities[product.id] = String(finalQty)
+        filledCount += 1
+      }
+
+      if (stockQty < suggestedQty) {
+        stockWarnings.push(`${product.name}: sugerido ${qty(suggestedQty)} ${product.unit}, disponível ${qty(stockQty)} ${product.unit}.`)
+      }
+    })
+
+    if (!filledCount) {
+      setSuggestionMessage('Nenhum item da sugestão possui estoque disponível para iniciar a feira.')
+      return
+    }
+
+    const message = stockWarnings.length
+      ? `Sugestão aplicada com ajustes de estoque: ${stockWarnings.join(' ')}`
+      : 'Sugestão aplicada com sucesso. Você ainda pode alterar as quantidades antes de iniciar.'
+
+    onAcceptSuggestion?.({
+      fairPlaceId: selectedFairPlace,
+      items: quantities,
+      message,
+      createdAt: Date.now(),
+    })
   }
 
   function RankList({ items, type }) {
@@ -102,7 +164,10 @@ export default function Inteligencia({ fairs, fairPlaces }) {
         <h3>Sugestão do que levar</h3>
         <div className="form-card compact">
           <label>Escolha a feira</label>
-          <select value={selectedFairPlace} onChange={(e) => setSelectedFairPlace(e.target.value)}>
+          <select value={selectedFairPlace} onChange={(e) => {
+            setSelectedFairPlace(e.target.value)
+            setSuggestionMessage('')
+          }}>
             <option value="">Todas as feiras</option>
             {fairPlaces.map((place) => (
               <option key={place.id} value={place.id}>{place.name}</option>
@@ -112,18 +177,30 @@ export default function Inteligencia({ fairs, fairPlaces }) {
           <p className="muted">A sugestão usa a média vendida e adiciona uma margem de 10%.</p>
 
           <div className="rank-list">
-            {suggestions.slice(0, 8).map((item) => (
-              <article className="rank-card" key={item.name}>
-                <div className="rank-number">↗</div>
-                <div>
-                  <strong>{item.name}</strong>
-                  <span>Média: {qty(item.avgSold)} {item.unit} · Sugestão: {qty(item.suggested)} {item.unit}</span>
-                </div>
-              </article>
-            ))}
+            {suggestions.slice(0, 12).map((item) => {
+              const product = products.find((p) => normalizeText(p.name) === normalizeText(item.name))
+              const stock = parseDecimal(product?.stock)
+              const suggested = parseDecimal(item.suggested)
+              const willTake = Math.max(Math.min(suggested, stock), 0)
+              const limited = product && stock < suggested
+
+              return (
+                <article className="rank-card" key={item.name}>
+                  <div className="rank-number">↗</div>
+                  <div>
+                    <strong>{item.name}</strong>
+                    <span>Média: {qty(item.avgSold)} {item.unit} · Sugestão: {qty(item.suggested)} {item.unit}</span>
+                    {product && <small className={limited ? 'warning-text' : 'success-text'}>{limited ? `Estoque menor: será preenchido com ${qty(willTake)} ${product.unit}.` : `Estoque disponível: ${qty(stock)} ${product.unit}.`}</small>}
+                  </div>
+                </article>
+              )
+            })}
 
             {!suggestions.length && <p className="empty small">Depois de encerrar algumas feiras, as sugestões aparecerão aqui.</p>}
           </div>
+
+          {suggestionMessage && <p className="message">{suggestionMessage}</p>}
+          <button type="button" className="primary-btn full-width" onClick={acceptSuggestion} disabled={!selectedFairPlace || !suggestions.length}>Aceitar sugestão e iniciar feira</button>
         </div>
       </section>
 

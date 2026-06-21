@@ -1,20 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
-import { startFair } from '../services/api'
+import { startFair, sortProductsByCategoryName } from '../services/api'
 import { qty } from '../utils/format'
 import { decimalInputProps, parseDecimal } from '../utils/number'
 
-export default function ComecarFeira({ user, products, selectedFairPlace, reload, setPage, readOnly = false, onBlockedAction }) {
+export default function ComecarFeira({ user, products, selectedFairPlace, acceptedSuggestion, clearAcceptedSuggestion, reload, setPage, readOnly = false, onBlockedAction }) {
   const [items, setItems] = useState([])
   const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setItems(products.map((p) => ({ ...p, quantity_taken: '' })))
-  }, [products])
+    const suggestionItems = acceptedSuggestion?.items || {}
+    const nextItems = sortProductsByCategoryName(products).map((p) => ({
+      ...p,
+      quantity_taken: suggestionItems[p.id] ?? '',
+    }))
+    setItems(nextItems)
+    setMessage(acceptedSuggestion?.message || '')
+  }, [products, acceptedSuggestion?.createdAt])
 
   const groupedItems = useMemo(() => {
     const groups = []
     const map = new Map()
-    items.forEach((product) => {
+    sortProductsByCategoryName(items).forEach((product) => {
       const categoryName = product.categories?.name || 'Sem categoria'
       if (!map.has(categoryName)) {
         const group = { name: categoryName, items: [] }
@@ -37,12 +44,14 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
   }
 
   function updateQuantity(id, value) {
+    setMessage('')
     setItems((current) => current.map((item) => item.id === id ? { ...item, quantity_taken: value } : item))
   }
 
   async function submit(event) {
     event.preventDefault()
     setMessage('')
+    if (saving) return
 
     if (readOnly) {
       setMessage(onBlockedAction?.() || 'Esta é uma conta teste. Iniciar feira está bloqueado.')
@@ -71,13 +80,19 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
     }
 
     try {
+      setSaving(true)
       await startFair({ userId: user.id, fairPlace: selectedFairPlace, items })
+      clearAcceptedSuggestion?.()
       await reload()
       setPage('dashboard')
     } catch (error) {
-      setMessage(error.message)
+      setMessage(error.message || 'Não foi possível iniciar a feira. Revise as quantidades e tente novamente.')
+    } finally {
+      setSaving(false)
     }
   }
+
+  const hasAcceptedSuggestion = Boolean(acceptedSuggestion?.fairPlaceId && acceptedSuggestion.fairPlaceId === selectedFairPlace.id)
 
   return (
     <main className="page">
@@ -87,6 +102,13 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
         <strong>{selectedFairPlace.name}</strong>
         <span>{selectedFairPlace.weekday || 'Dia não informado'} {selectedFairPlace.address ? `· ${selectedFairPlace.address}` : ''}</span>
       </section>
+
+      {hasAcceptedSuggestion && (
+        <section className="suggestion-banner">
+          <strong>Sugestão aplicada</strong>
+          <span>As quantidades foram preenchidas automaticamente. Você ainda pode alterar qualquer produto antes de iniciar.</span>
+        </section>
+      )}
 
       <form onSubmit={submit}>
         <section className="list">
@@ -115,7 +137,7 @@ export default function ComecarFeira({ user, products, selectedFairPlace, reload
         </section>
 
         {message && <p className="message">{message}</p>}
-        <button className="primary-btn sticky-btn">Iniciar {selectedFairPlace.name}</button>
+        <button className="primary-btn sticky-btn" disabled={saving}>{saving ? 'Iniciando...' : `Iniciar ${selectedFairPlace.name}`}</button>
       </form>
     </main>
   )

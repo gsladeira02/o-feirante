@@ -46,6 +46,7 @@ export default function App() {
   const [fairs, setFairs] = useState([])
   const [activeFair, setActiveFair] = useState(null)
   const [selectedFairPlace, setSelectedFairPlace] = useState(null)
+  const [acceptedSuggestion, setAcceptedSuggestion] = useState(null)
   const [loading, setLoading] = useState(true)
   const [access, setAccess] = useState({ read_only: false, is_active: true, label: null })
 
@@ -134,6 +135,7 @@ export default function App() {
     setFairs([])
     setActiveFair(null)
     setSelectedFairPlace(null)
+    setAcceptedSuggestion(null)
     setAccess({ read_only: false, is_active: true, label: null, subscription_status: 'manual' })
   }
 
@@ -257,6 +259,8 @@ export default function App() {
           user={user}
           products={products}
           selectedFairPlace={selectedFairPlace}
+          acceptedSuggestion={acceptedSuggestion}
+          clearAcceptedSuggestion={() => setAcceptedSuggestion(null)}
           reload={loadData}
           setPage={setPage}
           readOnly={isDemoAccount}
@@ -273,7 +277,17 @@ export default function App() {
       )}
 
       {page === 'inteligencia' && (
-        <Inteligencia fairs={fairs} fairPlaces={fairPlaces} />
+        <Inteligencia
+          fairs={fairs}
+          fairPlaces={fairPlaces}
+          products={products}
+          onAcceptSuggestion={(payload) => {
+            const place = fairPlaces.find((item) => item.id === payload.fairPlaceId)
+            if (place) setSelectedFairPlace(place)
+            setAcceptedSuggestion(payload)
+            setPage('comecar')
+          }}
+        />
       )}
 
 

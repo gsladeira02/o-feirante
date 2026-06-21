@@ -1765,3 +1765,39 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* V3.6.16 - estabilidade e sugestão de feira */
+.suggestion-banner {
+  margin: 10px 0 14px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  border: 1px solid #bbf7d0;
+  background: linear-gradient(135deg, #ecfdf5, #dcfce7);
+  color: #166534;
+  display: grid;
+  gap: 3px;
+  box-shadow: 0 8px 20px rgba(22, 101, 52, .08);
+}
+
+.suggestion-banner strong {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.suggestion-banner span,
+.success-text,
+.warning-text {
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.success-text { color: #166534; }
+.warning-text { color: #92400e; }
+
+button:disabled,
+.primary-btn:disabled,
+.secondary-btn:disabled {
+  opacity: .68;
+  cursor: not-allowed;
+}
