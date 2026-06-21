@@ -366,6 +366,29 @@ export async function repairFinishedActiveFairs(userId) {
   }
 }
 
+
+export function isDuplicateOfClosedFair(activeFair = {}, closedFairs = []) {
+  if (!activeFair || !Array.isArray(closedFairs) || !closedFairs.length) return false
+
+  const activePlaceId = activeFair.fair_place_id || ''
+  const activeName = normalizeText(activeFair.name || '')
+  const activeDate = String(activeFair.created_at || '').slice(0, 10)
+
+  return closedFairs.some((closedFair) => {
+    if (!closedFair) return false
+    const closedPlaceId = closedFair.fair_place_id || ''
+    const closedName = normalizeText(closedFair.name || '')
+    const closedCreatedDate = String(closedFair.created_at || '').slice(0, 10)
+    const closedAtDate = String(closedFair.closed_at || '').slice(0, 10)
+
+    const samePlace = activePlaceId && closedPlaceId && activePlaceId === closedPlaceId
+    const sameName = activeName && closedName && activeName === closedName
+    const sameDate = activeDate && (activeDate === closedCreatedDate || activeDate === closedAtDate)
+
+    return (samePlace || sameName) && sameDate
+  })
+}
+
 export async function getActiveFair(userId) {
   await repairFinishedActiveFairs(userId)
 

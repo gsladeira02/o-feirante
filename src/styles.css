@@ -1431,3 +1431,337 @@ textarea {
   margin-bottom: 4px;
   font-size: 0.9rem;
 }
+
+/* V3.6.14 - Correção geral de layout mobile e prevenção de estouro horizontal */
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  min-width: 0;
+}
+
+.app-shell,
+.page,
+.form-card,
+.item-card,
+.history-group,
+.history-card,
+.close-card,
+.summary-card,
+.selected-fair-card,
+.customer-history-card,
+.admin-client-card,
+.plans-section,
+.plan-card,
+.stat,
+.result-grid > div {
+  max-width: 100%;
+}
+
+.page {
+  overflow-x: hidden;
+}
+
+.topbar {
+  gap: 10px;
+}
+
+.header-brand {
+  min-width: 0;
+  flex: 1;
+}
+
+.header-brand > div {
+  min-width: 0;
+}
+
+.topbar h1,
+.page h2,
+.group-header h3,
+.item-card strong,
+.history-card strong,
+.close-card strong,
+.admin-client-head strong,
+.profile-summary-card strong {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.header-actions {
+  flex-shrink: 0;
+}
+
+/* Cards e listas mais estáveis no celular */
+.item-card,
+.rank-card,
+.admin-client-head,
+.group-header,
+.close-header,
+.customer-history-header,
+.form-title-row,
+.section-head-inline {
+  min-width: 0;
+}
+
+.item-card > div,
+.rank-card > div,
+.admin-client-head > div,
+.group-header > div,
+.close-header > div,
+.customer-history-header > div,
+.form-title-row > div,
+.section-head-inline > div {
+  min-width: 0;
+}
+
+.item-card span,
+.item-card small,
+.history-card span,
+.close-card span,
+.group-header span,
+.history-group small,
+.rank-card span,
+.admin-client-head span,
+.admin-client-head small,
+.customer-history-header span,
+.customer-details-list,
+.profile-summary-card span {
+  overflow-wrap: anywhere;
+}
+
+/* Histórico: evita preço e cards saindo para fora da tela */
+.history-group {
+  padding: 14px;
+  overflow: hidden;
+}
+
+.group-header {
+  align-items: flex-start;
+}
+
+.group-header strong {
+  max-width: 44%;
+  flex-shrink: 1;
+  text-align: right;
+  line-height: 1.1;
+  font-size: clamp(18px, 4.8vw, 24px);
+  overflow-wrap: anywhere;
+}
+
+.history-card {
+  overflow: hidden;
+}
+
+.history-card > div:first-child {
+  min-width: 0;
+}
+
+.result-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-width: 0;
+}
+
+.result-grid div,
+.stat {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.result-grid strong,
+.stat strong,
+.group-header strong {
+  overflow-wrap: anywhere;
+}
+
+.result-grid strong {
+  font-size: clamp(15px, 4.1vw, 21px);
+  line-height: 1.05;
+}
+
+.result-grid small,
+.stat small {
+  line-height: 1.15;
+}
+
+.history-products-group p {
+  margin: 8px 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* Formulários: evita zoom/quebra e melhora fluidez */
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid #d8d0c3;
+  border-radius: 15px;
+  padding: 13px 14px;
+  background: #fffdfa;
+  outline: none;
+  resize: vertical;
+}
+
+textarea:focus {
+  border-color: var(--green);
+}
+
+/* Botões e abas mais consistentes */
+.primary-btn,
+.secondary-btn,
+.mini-filled,
+.profile-top-btn,
+.icon-btn {
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+
+.primary-btn:active,
+.secondary-btn:active,
+.mini-filled:active,
+.profile-top-btn:active,
+.icon-btn:active,
+.nav-item:active {
+  transform: scale(.98);
+}
+
+.bottom-nav {
+  max-width: calc(100vw - 8px);
+  overflow: hidden;
+}
+
+.nav-item {
+  min-width: 0;
+}
+
+/* Ajustes para telas pequenas */
+@media (max-width: 430px) {
+  .app-shell {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .topbar h1 {
+    font-size: 21px;
+  }
+
+  .page h2 {
+    font-size: 23px;
+  }
+
+  .hero {
+    padding: 20px;
+  }
+
+  .hero h2 {
+    font-size: 34px;
+  }
+
+  .action-card strong {
+    font-size: 22px;
+  }
+
+  .history-group,
+  .history-card,
+  .item-card,
+  .form-card,
+  .close-card,
+  .summary-card,
+  .selected-fair-card {
+    border-radius: 20px;
+    padding: 14px;
+  }
+
+  .group-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .group-header strong {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .result-grid {
+    gap: 7px;
+  }
+
+  .result-grid div,
+  .stat {
+    border-radius: 16px;
+    padding: 11px 9px;
+  }
+
+  .row,
+  .row.three-cols {
+    grid-template-columns: 1fr;
+  }
+
+  .input-card {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .input-card input {
+    max-width: 100%;
+  }
+
+  .inline-actions,
+  .card-actions {
+    justify-content: stretch;
+    justify-items: stretch;
+  }
+
+  .inline-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mini-filled,
+  .mini-btn {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 370px) {
+  .app-shell {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .header-brand img {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .topbar h1 {
+    font-size: 19px;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+  }
+
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-grid {
+    grid-template-columns: 1fr;
+  }
+}
