@@ -1,28 +1,75 @@
-# O Feirante V3.6.16 — Estabilidade online + aceitar sugestão
+# O Feirante V3.7.1 — Stripe Assinaturas
 
-Esta versão finaliza a prioridade 1 de estabilidade do app online e adiciona o fluxo de aceitar sugestão da inteligência.
+Versão com integração Stripe para assinaturas recorrentes no lugar da InfinitePay.
 
-## Ajustes principais
+## Planos configurados
 
-- Fechamento de feira mais seguro.
-- Feira encerrada não deve continuar aparecendo como feira em andamento.
-- Proteção contra encerrar a mesma feira duas vezes.
-- Limpeza reforçada de feiras ativas duplicadas.
-- Mensagens mais amigáveis nas ações principais.
-- Botões com estado de carregamento para evitar duplo clique.
-- Sugestão do que levar agora tem botão **Aceitar sugestão e iniciar feira**.
-- Ao aceitar a sugestão, a tela de iniciar feira já vem preenchida.
-- O feirante ainda pode alterar qualquer quantidade antes de iniciar.
-- Se não houver estoque suficiente para algum item sugerido, o sistema preenche com o estoque disponível e avisa.
+- Mensal: `price_1TkmDrFYq1EGoHAlPpZd6nMl`
+- Trimestral: `price_1TkmDrFYq1EGoHAlMs0dIvYs`
+- Semestral: `price_1TkmDrFYq1EGoHAlkRqXKdDb`
+- Anual: `price_1TkmDsFYq1EGoHAl9SiEEKaJ`
 
-## Supabase
+## Variáveis na Vercel
 
-Após subir no GitHub, rode no SQL Editor:
+Configure em **Settings → Environment Variables**:
 
 ```txt
-supabase/migration-v3-6-16-estabilidade-feira.sql
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-publica
+SUPABASE_SERVICE_ROLE_KEY=sua-chave-service-role-do-supabase
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_MENSAL=price_1TkmDrFYq1EGoHAlPpZd6nMl
+STRIPE_PRICE_TRIMESTRAL=price_1TkmDrFYq1EGoHAlMs0dIvYs
+STRIPE_PRICE_SEMESTRAL=price_1TkmDrFYq1EGoHAlkRqXKdDb
+STRIPE_PRICE_ANUAL=price_1TkmDsFYq1EGoHAl9SiEEKaJ
 ```
+
+**Importante:** `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY` e `STRIPE_WEBHOOK_SECRET` são chaves secretas. Nunca coloque essas chaves em arquivos públicos do projeto.
+
+## Migration obrigatória
+
+Rode no Supabase SQL Editor:
+
+```txt
+supabase/migration-v3-7-stripe-assinaturas.sql
+```
+
+## Webhook da Stripe
+
+No Dashboard Stripe, crie um endpoint de webhook apontando para:
+
+```txt
+https://o-feirante.vercel.app/api/stripe-webhook
+```
+
+Eventos recomendados:
+
+```txt
+checkout.session.completed
+customer.subscription.created
+customer.subscription.updated
+customer.subscription.deleted
+invoice.payment_succeeded
+invoice.payment_failed
+```
+
+Depois copie o `whsec_...` e coloque em `STRIPE_WEBHOOK_SECRET` na Vercel.
+
+## Funcionamento
+
+- Todos os planos são recorrentes via Stripe Checkout em `mode=subscription`.
+- Trimestral, semestral e anual mostram o valor equivalente por mês no site, mas são assinaturas recorrentes do período escolhido.
+- O webhook atualiza o cadastro e, se o usuário já existir no Supabase Auth com o mesmo e-mail, atualiza `user_access` automaticamente.
+- Se o usuário ainda não existir, o cadastro fica no painel de gestão para liberação/criação da conta.
 
 ## Deploy
 
-Suba os arquivos de dentro desta pasta na raiz do GitHub. Não suba o ZIP fechado nem a pasta inteira.
+Suba somente os arquivos de dentro da pasta `o-feirante-v3-7-stripe-assinaturas` para o GitHub. Não suba o ZIP nem a pasta inteira.
+
+
+## V3.7.1
+
+- Adicionada opção de alterar senha dentro de Dados cadastrais.
+- A alteração exige a senha atual, nova senha e confirmação.
+- Não exige migration no Supabase.
