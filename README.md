@@ -1,4 +1,4 @@
-# O Feirante V3.7.1 — Stripe Assinaturas
+# O Feirante V3.7.2 — Stripe Assinaturas
 
 Versão com integração Stripe para assinaturas recorrentes no lugar da InfinitePay.
 
@@ -68,7 +68,7 @@ Depois copie o `whsec_...` e coloque em `STRIPE_WEBHOOK_SECRET` na Vercel.
 Suba somente os arquivos de dentro da pasta `o-feirante-v3-7-stripe-assinaturas` para o GitHub. Não suba o ZIP nem a pasta inteira.
 
 
-## V3.7.1
+## V3.7.2
 
 - Adicionada opção de alterar senha dentro de Dados cadastrais.
 - A alteração exige a senha atual, nova senha e confirmação.

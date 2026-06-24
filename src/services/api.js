@@ -422,31 +422,32 @@ export async function repairFinishedActiveFairs(userId) {
 export function isDuplicateOfClosedFair(activeFair = {}, closedFairs = []) {
   if (!activeFair || !Array.isArray(closedFairs) || !closedFairs.length) return false
 
-  if (isFairSignatureClosedLocally(activeFair)) return true
-
+  // Importante: não compare apenas por dia/local/nome.
+  // O feirante pode encerrar uma feira e iniciar outra no mesmo local no mesmo dia.
+  // A regra antiga escondia essa nova feira como se fosse duplicada.
   const activePlaceId = activeFair.fair_place_id || ''
   const activeName = normalizeText(activeFair.name || '')
   const activeCreatedAt = activeFair.created_at ? new Date(activeFair.created_at).getTime() : 0
-  const activeDate = String(activeFair.created_at || '').slice(0, 10)
+
+  if (!activeCreatedAt) return false
 
   return closedFairs.some((closedFair) => {
     if (!closedFair || closedFair.id === activeFair.id) return false
+
     const closedPlaceId = closedFair.fair_place_id || ''
     const closedName = normalizeText(closedFair.name || '')
-    const closedCreatedDate = String(closedFair.created_at || '').slice(0, 10)
-    const closedAtDate = String(closedFair.closed_at || '').slice(0, 10)
     const closedAt = closedFair.closed_at ? new Date(closedFair.closed_at).getTime() : 0
+
+    if (!closedAt) return false
 
     const samePlace = activePlaceId && closedPlaceId && activePlaceId === closedPlaceId
     const sameName = activeName && closedName && activeName === closedName
-    const sameDate = activeDate && (activeDate === closedCreatedDate || activeDate === closedAtDate)
-    const closedAfterActiveStarted = Boolean(activeCreatedAt && closedAt && closedAt >= activeCreatedAt)
-    const closeTimeDistanceHours = activeCreatedAt && closedAt ? Math.abs(closedAt - activeCreatedAt) / 36e5 : 9999
+    const closedAfterActiveStarted = closedAt >= activeCreatedAt
+    const distanceHours = Math.abs(closedAt - activeCreatedAt) / 36e5
 
-    // Regra reforçada: se já existe uma feira encerrada do mesmo local/nome
-    // no mesmo dia ou dentro de uma janela curta, qualquer registro active é tratado
-    // como sobra/duplicidade, evitando botão de encerrar duas vezes.
-    return (samePlace || sameName) && (closedAfterActiveStarted || sameDate || closeTimeDistanceHours <= 36)
+    // Só é duplicada se a feira ativa foi criada antes do fechamento registrado.
+    // Se a feira ativa foi criada depois, é uma nova feira legítima e deve aparecer.
+    return (samePlace || sameName) && closedAfterActiveStarted && distanceHours <= 48
   })
 }
 
@@ -550,6 +551,8 @@ export async function startFair({ userId, fairPlace, items }) {
     const { error } = await supabase.from('products').update({ stock: newStock }).eq('id', item.id)
     if (error) throw error
   }
+
+  return fair
 }
 
 export async function updateFairTaken({ closingItems }) {
