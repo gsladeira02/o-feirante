@@ -391,64 +391,18 @@ export async function repairFinishedActiveFairs(userId) {
 
 
 export function isDuplicateOfClosedFair(activeFair = {}, closedFairs = []) {
-  if (!activeFair || !Array.isArray(closedFairs) || !closedFairs.length) return false
-
-  // Importante: não compare apenas por dia/local/nome.
-  // O feirante pode encerrar uma feira e iniciar outra no mesmo local no mesmo dia.
-  // A regra antiga escondia essa nova feira como se fosse duplicada.
-  const activePlaceId = activeFair.fair_place_id || ''
-  const activeName = normalizeText(activeFair.name || '')
-  const activeCreatedAt = activeFair.created_at ? new Date(activeFair.created_at).getTime() : 0
-
-  if (!activeCreatedAt) return false
-
-  return closedFairs.some((closedFair) => {
-    if (!closedFair || closedFair.id === activeFair.id) return false
-
-    const closedPlaceId = closedFair.fair_place_id || ''
-    const closedName = normalizeText(closedFair.name || '')
-    const closedAt = closedFair.closed_at ? new Date(closedFair.closed_at).getTime() : 0
-
-    if (!closedAt) return false
-
-    const samePlace = activePlaceId && closedPlaceId && activePlaceId === closedPlaceId
-    const sameName = activeName && closedName && activeName === closedName
-    const closedAfterActiveStarted = closedAt >= activeCreatedAt
-    const distanceHours = Math.abs(closedAt - activeCreatedAt) / 36e5
-
-    // Só é duplicada se a feira ativa foi criada antes do fechamento registrado.
-    // Se a feira ativa foi criada depois, é uma nova feira legítima e deve aparecer.
-    return (samePlace || sameName) && closedAfterActiveStarted && distanceHours <= 48
-  })
+  // V3.7.4: não escondemos mais feiras ativas por comparação com histórico.
+  // A regra definitiva passa a ser simples e segura:
+  // - status = active e closed_at vazio => feira em andamento;
+  // - status = closed ou closed_at preenchido => histórico.
+  // Isso evita que uma nova feira no mesmo local/dia desapareça ou não possa ser continuada.
+  return false
 }
 
 async function archiveDuplicateActiveFairs(userId, closedFairs = []) {
-  if (!userId || !closedFairs.length) return
-
-  const { data: activeData, error } = await supabase
-    .from('fairs')
-    .select('id, user_id, fair_place_id, name, status, created_at, closed_at')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .is('closed_at', null)
-
-  if (error) throw error
-
-  const duplicateIds = (activeData || [])
-    .filter((fair) => isDuplicateOfClosedFair(fair, closedFairs))
-    .map((fair) => fair.id)
-
-  if (!duplicateIds.length) return
-
-  const { error: updateError } = await supabase
-    .from('fairs')
-    .update({ status: 'archived', closed_at: new Date().toISOString() })
-    .in('id', duplicateIds)
-    .eq('user_id', userId)
-
-  if (updateError) throw updateError
-
-  (activeData || []).filter((fair) => duplicateIds.includes(fair.id)).forEach((fair) => markFairClosedLocally(fair.id, fair))
+  // Mantido apenas para compatibilidade com chamadas antigas.
+  // Não arquiva mais feiras ativas automaticamente.
+  return
 }
 
 export async function getActiveFair(userId) {
@@ -475,12 +429,11 @@ export async function getActiveFair(userId) {
   if (activeError) throw activeError
   if (closedError) throw closedError
 
-  const closedFairs = (closedData || []).map(normalizeFair)
   const candidates = (activeData || []).map(normalizeFair)
   const trulyActive = candidates.find((fair) => (
-    !isFairClosedLocally(fair.id) &&
-    !hasClosingData(fair) &&
-    !isDuplicateOfClosedFair(fair, closedFairs)
+    fair?.status === 'active' &&
+    !fair?.closed_at &&
+    !hasClosingData(fair)
   ))
 
   return normalizeFair(trulyActive || null)
@@ -506,7 +459,9 @@ export async function startFair({ userId, fairPlace, items }) {
 
   if (existingActiveError) throw existingActiveError
   if (existingActive && !hasClosingData(existingActive)) {
-    throw new Error(`Já existe uma feira em andamento: ${existingActive.name || 'feira aberta'}. Volte para a tela inicial para continuar ou encerrar essa feira.`)
+    // Já existe feira aberta. Não baixa estoque novamente.
+    // O app apenas retorna a feira aberta para a tela inicial carregar e permitir encerrar.
+    return existingActive
   }
 
   const { data: fair, error: fairError } = await supabase
