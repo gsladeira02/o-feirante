@@ -1,4 +1,4 @@
-# O Feirante V3.7.2 — Stripe Assinaturas
+# O Feirante V3.7.3 — Stripe Assinaturas
 
 Versão com integração Stripe para assinaturas recorrentes no lugar da InfinitePay.
 
@@ -68,8 +68,15 @@ Depois copie o `whsec_...` e coloque em `STRIPE_WEBHOOK_SECRET` na Vercel.
 Suba somente os arquivos de dentro da pasta `o-feirante-v3-7-stripe-assinaturas` para o GitHub. Não suba o ZIP nem a pasta inteira.
 
 
-## V3.7.2
+## V3.7.3
 
 - Adicionada opção de alterar senha dentro de Dados cadastrais.
 - A alteração exige a senha atual, nova senha e confirmação.
 - Não exige migration no Supabase.
+
+
+## V3.7.3 - correção da mesma feira
+
+- Removeu o cache antigo por assinatura de feira (data/local/nome) que escondia novas feiras iniciadas no mesmo local e no mesmo dia.
+- Impede baixar estoque novamente quando já existe uma feira em andamento criada por uma tentativa anterior.
+- Se já houver uma feira aberta, o app orienta o usuário a voltar para a tela inicial para continuar/encerrar.

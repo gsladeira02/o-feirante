@@ -1,7 +1,7 @@
 {
-  "name": "o-feirante-v3-7-2-iniciar-feira-fix",
+  "name": "o-feirante-v3-7-3-feira-mesmo-local-fix",
   "private": true,
-  "version": "3.7.2",
+  "version": "3.7.3",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -5,7 +5,7 @@ export const DEMO_ACCOUNT_MESSAGE = 'Esta é uma conta teste. As ações de cada
 
 
 const CLOSED_FAIRS_KEY = 'o_feirante_closed_fairs_v1'
-const CLOSED_FAIR_SIGNATURES_KEY = 'o_feirante_closed_fair_signatures_v1'
+const CLOSED_FAIR_SIGNATURES_KEY = 'o_feirante_closed_fair_signatures_v1' // legado: não usar para bloquear novas feiras
 
 function getLocallyClosedFairIds() {
   if (typeof window === 'undefined') return []
@@ -25,7 +25,8 @@ export function markFairClosedLocally(fairId, fair = null) {
     if (!list.includes(fairId)) {
       window.localStorage.setItem(CLOSED_FAIRS_KEY, JSON.stringify([...list, fairId].slice(-100)))
     }
-    if (fair) markFairSignatureClosedLocally(fair)
+    // Não salvamos mais assinatura por data/local/nome.
+    // Isso escondia uma nova feira iniciada no mesmo local e no mesmo dia.
   } catch {}
 }
 
@@ -34,41 +35,11 @@ function isFairClosedLocally(fairId) {
 }
 
 
-
-
-function fairSignature(fair = {}) {
-  const date = String(fair.closed_at || fair.created_at || '').slice(0, 10)
-  const place = fair.fair_place_id || ''
-  const name = normalizeText(fair.name || '')
-  return `${date}|${place}|${name}`
-}
-
-function getLocallyClosedFairSignatures() {
-  if (typeof window === 'undefined') return []
+function clearLegacyFairSignatureCache() {
+  if (typeof window === 'undefined') return
   try {
-    const raw = window.localStorage.getItem(CLOSED_FAIR_SIGNATURES_KEY)
-    const list = raw ? JSON.parse(raw) : []
-    return Array.isArray(list) ? list : []
-  } catch {
-    return []
-  }
-}
-
-function markFairSignatureClosedLocally(fair) {
-  if (!fair || typeof window === 'undefined') return
-  const signature = fairSignature(fair)
-  if (!signature || signature === '||') return
-  try {
-    const list = getLocallyClosedFairSignatures()
-    if (!list.includes(signature)) {
-      window.localStorage.setItem(CLOSED_FAIR_SIGNATURES_KEY, JSON.stringify([...list, signature].slice(-150)))
-    }
+    window.localStorage.removeItem(CLOSED_FAIR_SIGNATURES_KEY)
   } catch {}
-}
-
-function isFairSignatureClosedLocally(fair) {
-  const signature = fairSignature(fair)
-  return Boolean(signature && getLocallyClosedFairSignatures().includes(signature))
 }
 
 function normalizeText(value = '') {
@@ -481,6 +452,7 @@ async function archiveDuplicateActiveFairs(userId, closedFairs = []) {
 }
 
 export async function getActiveFair(userId) {
+  clearLegacyFairSignatureCache()
   await repairFinishedActiveFairs(userId)
 
   const [{ data: activeData, error: activeError }, { data: closedData, error: closedError }] = await Promise.all([
@@ -507,7 +479,6 @@ export async function getActiveFair(userId) {
   const candidates = (activeData || []).map(normalizeFair)
   const trulyActive = candidates.find((fair) => (
     !isFairClosedLocally(fair.id) &&
-    !isFairSignatureClosedLocally(fair) &&
     !hasClosingData(fair) &&
     !isDuplicateOfClosedFair(fair, closedFairs)
   ))
@@ -517,8 +488,26 @@ export async function getActiveFair(userId) {
 
 export async function startFair({ userId, fairPlace, items }) {
   await ensureCanWrite()
+  clearLegacyFairSignatureCache()
   const selected = items.filter((item) => parseDecimal(item.quantity_taken) > 0)
   if (!selected.length) throw new Error('Informe pelo menos um produto levado.')
+
+  // Segurança: não cria outra feira nem baixa estoque se já existe uma feira aberta.
+  // Isso evita o caso em que uma tentativa anterior baixou estoque, mas a feira ficou escondida por cache antigo.
+  const { data: existingActive, error: existingActiveError } = await supabase
+    .from('fairs')
+    .select('id, name, fair_place_id, status, created_at, closed_at, revenue_total, cost_total, profit_total, loss_total, fair_items(*)')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .is('closed_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (existingActiveError) throw existingActiveError
+  if (existingActive && !hasClosingData(existingActive)) {
+    throw new Error(`Já existe uma feira em andamento: ${existingActive.name || 'feira aberta'}. Volte para a tela inicial para continuar ou encerrar essa feira.`)
+  }
 
   const { data: fair, error: fairError } = await supabase
     .from('fairs')
