@@ -1,10 +1,28 @@
-# O Feirante V3.7.4 — Correção feira em andamento
+# O Feirante V3.6.16 — Estabilidade online + aceitar sugestão
 
-Correção focada no fluxo de iniciar/continuar feira:
+Esta versão finaliza a prioridade 1 de estabilidade do app online e adiciona o fluxo de aceitar sugestão da inteligência.
 
-- Remove a regra que escondia feiras ativas por comparação com histórico.
-- A regra agora é simples: `status = active` e `closed_at` vazio aparece como feira em andamento.
-- Se uma tentativa anterior já criou a feira e baixou estoque, iniciar novamente não baixa estoque de novo; o app volta para a feira aberta.
-- Mantém as funções da V3.7.x: Stripe, alterar senha, sugestões, entregas, clientes, histórico e inteligência.
+## Ajustes principais
 
-Não precisa rodar nova migration.
+- Fechamento de feira mais seguro.
+- Feira encerrada não deve continuar aparecendo como feira em andamento.
+- Proteção contra encerrar a mesma feira duas vezes.
+- Limpeza reforçada de feiras ativas duplicadas.
+- Mensagens mais amigáveis nas ações principais.
+- Botões com estado de carregamento para evitar duplo clique.
+- Sugestão do que levar agora tem botão **Aceitar sugestão e iniciar feira**.
+- Ao aceitar a sugestão, a tela de iniciar feira já vem preenchida.
+- O feirante ainda pode alterar qualquer quantidade antes de iniciar.
+- Se não houver estoque suficiente para algum item sugerido, o sistema preenche com o estoque disponível e avisa.
+
+## Supabase
+
+Após subir no GitHub, rode no SQL Editor:
+
+```txt
+supabase/migration-v3-6-16-estabilidade-feira.sql
+```
+
+## Deploy
+
+Suba os arquivos de dentro desta pasta na raiz do GitHub. Não suba o ZIP fechado nem a pasta inteira.

@@ -7,40 +7,40 @@ const PLANS = [
     id: 'mensal',
     name: 'Mensal',
     priceLabel: 'R$ 19,90',
-    installmentLabel: '',
+    installmentLabel: 'Pagamento mensal',
     amountCents: 1990,
     intervalMonths: 1,
-    recurrenceLabel: 'Cobrança recorrente mensal',
+    recurrenceLabel: 'Cobrança mensal',
     note: 'Ideal para começar',
   },
   {
     id: 'trimestral',
     name: 'Trimestral',
     priceLabel: 'R$ 54,90',
-    installmentLabel: 'Equivale a R$ 18,30/mês',
+    installmentLabel: 'ou 3x de R$ 18,30',
     amountCents: 5490,
     intervalMonths: 3,
-    recurrenceLabel: 'Cobrança recorrente a cada 3 meses',
+    recurrenceLabel: 'Acesso por 3 meses',
     note: 'Economize no trimestre',
   },
   {
     id: 'semestral',
     name: 'Semestral',
     priceLabel: 'R$ 99,90',
-    installmentLabel: 'Equivale a R$ 16,65/mês',
+    installmentLabel: 'ou 6x de R$ 16,65',
     amountCents: 9990,
     intervalMonths: 6,
-    recurrenceLabel: 'Cobrança recorrente a cada 6 meses',
+    recurrenceLabel: 'Acesso por 6 meses',
     note: 'Mais controle por menos',
   },
   {
     id: 'anual',
     name: 'Anual',
     priceLabel: 'R$ 179,90',
-    installmentLabel: 'Equivale a R$ 14,99/mês',
+    installmentLabel: 'ou 12x de R$ 14,99',
     amountCents: 17990,
     intervalMonths: 12,
-    recurrenceLabel: 'Cobrança recorrente anual',
+    recurrenceLabel: 'Acesso por 12 meses',
     note: 'Melhor custo-benefício',
     featured: true,
   },
@@ -170,35 +170,36 @@ export default function Login({ onLogin }) {
 
     setSignupLoading(true)
     try {
-      const paymentResponse = await fetch('/api/stripe-checkout', {
+      const paymentResponse = await fetch('/api/infinitepay-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan_id: selectedPlan.id,
+          redirect_url: redirectUrl,
           order_nsu: orderNsu,
-          success_url: redirectUrl,
-          cancel_url: `${window.location.origin}/?pagamento=cancelado`,
           customer: {
             name: signupData.full_name,
             email: signupData.email,
             phone_number: formatBrazilPhone(signupData.phone),
           },
-          signup: signupData,
+          items: [
+            {
+              quantity: 1,
+              price: selectedPlan.amountCents,
+              description: `O Feirante - Plano ${selectedPlan.name} - ${selectedPlan.priceLabel}${selectedPlan.installmentLabel ? ` (${selectedPlan.installmentLabel})` : ''}`,
+            },
+          ],
         }),
       })
 
       const paymentData = await paymentResponse.json().catch(() => ({}))
-      const paymentUrl = paymentData.url
+      const paymentUrl = paymentData.url || paymentData.checkout_url
 
       if (!paymentResponse.ok || !paymentUrl) {
-        throw new Error(paymentData.message || 'Não foi possível iniciar o pagamento pela Stripe.')
+        throw new Error(paymentData.message || 'Não foi possível gerar o link de pagamento.')
       }
 
       const { error: signupError } = await supabase.from('customer_signups').insert({
         ...signupData,
-        stripe_checkout_session_id: paymentData.id || null,
-        stripe_checkout_url: paymentUrl,
-        stripe_price_id: paymentData.price_id || null,
         infinitepay_url: paymentUrl,
       })
 
@@ -223,8 +224,8 @@ export default function Login({ onLogin }) {
 
       {paymentSuccess && (
         <section className="success-box">
-          <strong>Assinatura enviada</strong>
-          <span>Recebemos o retorno da Stripe. Seu acesso será liberado após a confirmação.</span>
+          <strong>Pagamento enviado</strong>
+          <span>Recebemos o retorno do pagamento. Seu acesso será liberado após a confirmação.</span>
         </section>
       )}
 
@@ -304,8 +305,8 @@ export default function Login({ onLogin }) {
 
           {signupMessage && <p className="message">{signupMessage}</p>}
 
-          <button className="primary-btn" disabled={signupLoading}>{signupLoading ? 'Abrindo pagamento...' : 'Ir para pagamento'}</button>
-          <p className="access-note">Após a confirmação da assinatura, seu acesso será liberado conforme o plano escolhido.</p>
+          <button className="primary-btn" disabled={signupLoading}>{signupLoading ? 'Gerando pagamento...' : 'Ir para pagamento'}</button>
+          <p className="access-note">Após a confirmação do pagamento, seu acesso será liberado conforme o plano escolhido.</p>
           <p className="legal-note">
             Ao assinar, você concorda com os{' '}
             <button type="button" onClick={() => setLegalView('terms')}>Termos de Uso</button>

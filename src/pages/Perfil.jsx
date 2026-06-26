@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { updateProfileData } from '../services/api'
-import { supabase } from '../supabase'
 
 function onlyDigits(value) {
   return String(value || '').replace(/\D/g, '')
@@ -14,8 +13,6 @@ export default function Perfil({ user, profile, reload, readOnly = false, onBloc
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [formKey, setFormKey] = useState(0)
-  const [passwordMessage, setPasswordMessage] = useState('')
-  const [savingPassword, setSavingPassword] = useState(false)
 
   const defaults = useMemo(() => ({
     full_name: profile?.full_name || profile?.name || '',
@@ -64,70 +61,6 @@ export default function Perfil({ user, profile, reload, readOnly = false, onBloc
       setMessage(error.message || 'Não foi possível atualizar os dados.')
     } finally {
       setSaving(false)
-    }
-  }
-
-
-  async function submitPassword(event) {
-    event.preventDefault()
-    setPasswordMessage('')
-
-    if (readOnly) {
-      setPasswordMessage(onBlockedAction?.() || 'Esta é uma conta teste. Alterações bloqueadas.')
-      return
-    }
-
-    if (!supabase) {
-      setPasswordMessage('Não foi possível conectar ao sistema agora. Tente novamente em instantes.')
-      return
-    }
-
-    const form = event.currentTarget
-    const data = new FormData(form)
-    const currentPassword = String(data.get('current_password') || '')
-    const newPassword = String(data.get('new_password') || '')
-    const confirmPassword = String(data.get('confirm_password') || '')
-
-    if (!currentPassword) {
-      setPasswordMessage('Informe sua senha atual.')
-      return
-    }
-
-    if (newPassword.length < 6) {
-      setPasswordMessage('A nova senha precisa ter pelo menos 6 caracteres.')
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage('A confirmação da senha não confere.')
-      return
-    }
-
-    setSavingPassword(true)
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      })
-
-      if (signInError) {
-        throw new Error('Senha atual incorreta.')
-      }
-
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      })
-
-      if (updateError) {
-        throw updateError
-      }
-
-      form.reset()
-      setPasswordMessage('Senha alterada com sucesso.')
-    } catch (error) {
-      setPasswordMessage(error.message || 'Não foi possível alterar a senha agora.')
-    } finally {
-      setSavingPassword(false)
     }
   }
 
@@ -187,25 +120,6 @@ export default function Perfil({ user, profile, reload, readOnly = false, onBloc
 
         <button className="primary-btn" disabled={saving}>{saving ? 'Salvando...' : 'Salvar dados cadastrais'}</button>
       </form>
-
-      <form className="form-card password-card" onSubmit={submitPassword}>
-        <h3>Alterar senha</h3>
-        <p className="muted small-note">Use essa opção para trocar sua senha de acesso ao aplicativo.</p>
-
-        <label>Senha atual</label>
-        <input name="current_password" type="password" autoComplete="current-password" placeholder="Digite sua senha atual" required />
-
-        <label>Nova senha</label>
-        <input name="new_password" type="password" autoComplete="new-password" placeholder="Mínimo de 6 caracteres" minLength={6} required />
-
-        <label>Confirmar nova senha</label>
-        <input name="confirm_password" type="password" autoComplete="new-password" placeholder="Digite novamente a nova senha" minLength={6} required />
-
-        {passwordMessage && <p className="message">{passwordMessage}</p>}
-
-        <button className="secondary-btn full-width" disabled={savingPassword}>{savingPassword ? 'Alterando...' : 'Alterar senha'}</button>
-      </form>
-
     </main>
   )
 }
