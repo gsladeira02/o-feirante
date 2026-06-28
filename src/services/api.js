@@ -25,7 +25,9 @@ export function markFairClosedLocally(fairId, fair = null) {
     if (!list.includes(fairId)) {
       window.localStorage.setItem(CLOSED_FAIRS_KEY, JSON.stringify([...list, fairId].slice(-100)))
     }
-    if (fair) markFairSignatureClosedLocally(fair)
+    // Não marcamos mais assinatura por data/local/nome.
+    // Isso bloqueava feiras legítimas no mesmo local em outro dia
+    // ou quando o feirante precisava iniciar uma feira cadastrada para sábado em um domingo.
   } catch {}
 }
 
@@ -66,9 +68,10 @@ function markFairSignatureClosedLocally(fair) {
   } catch {}
 }
 
-function isFairSignatureClosedLocally(fair) {
-  const signature = fairSignature(fair)
-  return Boolean(signature && getLocallyClosedFairSignatures().includes(signature))
+function isFairSignatureClosedLocally(_fair) {
+  // Regra desativada de propósito: fechar uma feira de um local não pode impedir
+  // que o feirante inicie outra feira do mesmo local/nome depois.
+  return false
 }
 
 function normalizeText(value = '') {
@@ -419,64 +422,17 @@ export async function repairFinishedActiveFairs(userId) {
 }
 
 
-export function isDuplicateOfClosedFair(activeFair = {}, closedFairs = []) {
-  if (!activeFair || !Array.isArray(closedFairs) || !closedFairs.length) return false
-
-  if (isFairSignatureClosedLocally(activeFair)) return true
-
-  const activePlaceId = activeFair.fair_place_id || ''
-  const activeName = normalizeText(activeFair.name || '')
-  const activeCreatedAt = activeFair.created_at ? new Date(activeFair.created_at).getTime() : 0
-  const activeDate = String(activeFair.created_at || '').slice(0, 10)
-
-  return closedFairs.some((closedFair) => {
-    if (!closedFair || closedFair.id === activeFair.id) return false
-    const closedPlaceId = closedFair.fair_place_id || ''
-    const closedName = normalizeText(closedFair.name || '')
-    const closedCreatedDate = String(closedFair.created_at || '').slice(0, 10)
-    const closedAtDate = String(closedFair.closed_at || '').slice(0, 10)
-    const closedAt = closedFair.closed_at ? new Date(closedFair.closed_at).getTime() : 0
-
-    const samePlace = activePlaceId && closedPlaceId && activePlaceId === closedPlaceId
-    const sameName = activeName && closedName && activeName === closedName
-    const sameDate = activeDate && (activeDate === closedCreatedDate || activeDate === closedAtDate)
-    const closedAfterActiveStarted = Boolean(activeCreatedAt && closedAt && closedAt >= activeCreatedAt)
-    const closeTimeDistanceHours = activeCreatedAt && closedAt ? Math.abs(closedAt - activeCreatedAt) / 36e5 : 9999
-
-    // Regra reforçada: se já existe uma feira encerrada do mesmo local/nome
-    // no mesmo dia ou dentro de uma janela curta, qualquer registro active é tratado
-    // como sobra/duplicidade, evitando botão de encerrar duas vezes.
-    return (samePlace || sameName) && (closedAfterActiveStarted || sameDate || closeTimeDistanceHours <= 36)
-  })
+export function isDuplicateOfClosedFair(_activeFair = {}, _closedFairs = []) {
+  // Regra removida: o histórico não deve bloquear uma nova feira.
+  // A separação correta passa a ser apenas:
+  // - status = active e closed_at vazio => feira em andamento
+  // - status = closed ou closed_at preenchido => histórico
+  return false
 }
 
-async function archiveDuplicateActiveFairs(userId, closedFairs = []) {
-  if (!userId || !closedFairs.length) return
-
-  const { data: activeData, error } = await supabase
-    .from('fairs')
-    .select('id, user_id, fair_place_id, name, status, created_at, closed_at')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .is('closed_at', null)
-
-  if (error) throw error
-
-  const duplicateIds = (activeData || [])
-    .filter((fair) => isDuplicateOfClosedFair(fair, closedFairs))
-    .map((fair) => fair.id)
-
-  if (!duplicateIds.length) return
-
-  const { error: updateError } = await supabase
-    .from('fairs')
-    .update({ status: 'archived', closed_at: new Date().toISOString() })
-    .in('id', duplicateIds)
-    .eq('user_id', userId)
-
-  if (updateError) throw updateError
-
-  (activeData || []).filter((fair) => duplicateIds.includes(fair.id)).forEach((fair) => markFairClosedLocally(fair.id, fair))
+async function archiveDuplicateActiveFairs(_userId, _closedFairs = []) {
+  // Sem ação. Mantido apenas para compatibilidade com chamadas antigas.
+  return
 }
 
 export async function getActiveFair(userId) {
@@ -506,9 +462,9 @@ export async function getActiveFair(userId) {
   const candidates = (activeData || []).map(normalizeFair)
   const trulyActive = candidates.find((fair) => (
     !isFairClosedLocally(fair.id) &&
-    !isFairSignatureClosedLocally(fair) &&
     !hasClosingData(fair) &&
-    !isDuplicateOfClosedFair(fair, closedFairs)
+    fair.status === 'active' &&
+    !fair.closed_at
   ))
 
   return normalizeFair(trulyActive || null)
@@ -516,6 +472,14 @@ export async function getActiveFair(userId) {
 
 export async function startFair({ userId, fairPlace, items }) {
   await ensureCanWrite()
+
+  // Antes de baixar qualquer estoque, confira se já existe uma feira aberta.
+  // Isso evita o bug em que uma tentativa anterior baixou estoque, mas a tela não exibiu a feira.
+  const alreadyActive = await getActiveFair(userId)
+  if (alreadyActive) {
+    throw new Error('Já existe uma feira em andamento. Volte para a tela inicial para continuar ou encerrar essa feira antes de iniciar outra.')
+  }
+
   const selected = items.filter((item) => parseDecimal(item.quantity_taken) > 0)
   if (!selected.length) throw new Error('Informe pelo menos um produto levado.')
 

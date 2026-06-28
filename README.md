@@ -68,3 +68,11 @@ Eventos:
 
 Rode no Supabase:
 supabase/migration-v3-6-19-stripe-assinaturas.sql
+
+
+## V3.6.20 — Correção de início de feira em dia diferente
+
+- O dia cadastrado da feira agora é apenas informativo e não bloqueia o início da feira.
+- O histórico não bloqueia mais uma nova feira do mesmo local/nome.
+- Antes de baixar estoque, o app confere se já existe uma feira em andamento.
+- Se existir feira aberta, o estoque não baixa novamente e o usuário é orientado a continuar/encerrar a feira atual.

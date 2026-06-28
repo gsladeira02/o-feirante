@@ -80,8 +80,7 @@ export default function App() {
       !closedFairIds.has(activeFairData.id) &&
       activeFairData.status === 'active' &&
       !activeFairData.closed_at &&
-      !hasClosingData(activeFairData) &&
-      !isDuplicateOfClosedFair(activeFairData, fairsData)
+      !hasClosingData(activeFairData)
         ? activeFairData
         : null
 
