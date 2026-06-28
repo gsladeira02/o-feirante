@@ -1,7 +1,7 @@
 {
-  "name": "o-feirante-v3-6-18",
+  "name": "o-feirante-v3-6-19-stripe-estavel",
   "private": true,
-  "version": "3.6.18",
+  "version": "3.6.19",
   "type": "module",
   "scripts": {
     "dev": "vite",

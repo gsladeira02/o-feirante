@@ -64,7 +64,7 @@ export function TermsOfUse() {
 
       <h3>4. Planos e pagamento</h3>
       <p>O acesso ao O Feirante pode ser condicionado à contratação de plano pago. Os planos disponíveis são: Mensal R$ 19,90, Trimestral R$ 54,90, Semestral R$ 99,90 e Anual R$ 179,90. O cadastro pode solicitar nome completo, e-mail, CPF, data de nascimento, celular, cidade, estado, nome da banca e CNPJ opcional para viabilizar identificação, pagamento e liberação do acesso.</p>
-      <p>O pagamento pode ser realizado por gateway externo. Quando disponível no checkout, os planos trimestral, semestral e anual podem permitir parcelamento no cartão, sem alterar o período de acesso contratado. O não pagamento, atraso, cancelamento, contestação ou falha na confirmação do plano poderá resultar na não liberação, suspensão, bloqueio ou encerramento do acesso à plataforma.</p>
+      <p>O pagamento pode ser realizado por gateway externo. Os planos trimestral, semestral e anual são assinaturas recorrentes cobradas no período contratado, com exibição do valor equivalente mensal apenas para comparação comercial. O não pagamento, atraso, cancelamento, contestação ou falha na confirmação do plano poderá resultar na não liberação, suspensão, bloqueio ou encerramento do acesso à plataforma.</p>
 
       <h3>5. Uso permitido</h3>
       <p>O usuário deve utilizar o O Feirante apenas para fins lícitos e relacionados à organização de sua banca, estoque, produtos, entregas, clientes, feiras e resultados.</p>

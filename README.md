@@ -39,3 +39,32 @@ Suba os arquivos de dentro desta pasta na raiz do GitHub. Não suba o ZIP fechad
 - Adicionada alteração de senha em Dados cadastrais.
 - Mantida a base estável da V3.6.17, sem alterar a lógica de início e encerramento de feira.
 - Não exige nova migration no Supabase.
+
+
+## V3.6.19 - Stripe Assinaturas
+
+Base estável da V3.6.18 com troca do checkout InfinitePay para Stripe Checkout em modo assinatura.
+
+Variáveis necessárias na Vercel:
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- VITE_STRIPE_PUBLISHABLE_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- STRIPE_PRICE_MENSAL
+- STRIPE_PRICE_TRIMESTRAL
+- STRIPE_PRICE_SEMESTRAL
+- STRIPE_PRICE_ANUAL
+
+Webhook Stripe:
+https://o-feirante.vercel.app/api/stripe-webhook
+
+Eventos:
+- checkout.session.completed
+- customer.subscription.created
+- customer.subscription.updated
+- customer.subscription.deleted
+- invoice.payment_succeeded
+- invoice.payment_failed
+
+Rode no Supabase:
+supabase/migration-v3-6-19-stripe-assinaturas.sql
