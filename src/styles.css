@@ -1801,3 +1801,18 @@ button:disabled,
   opacity: .68;
   cursor: not-allowed;
 }
+
+/* V3.6.17: impede o botão de iniciar feira de cobrir o último produto */
+.start-fair-form .list {
+  padding-bottom: 110px;
+}
+
+.start-fair-form .sticky-btn {
+  z-index: 6;
+}
+
+@media (max-width: 430px) {
+  .start-fair-form .list {
+    padding-bottom: 130px;
+  }
+}

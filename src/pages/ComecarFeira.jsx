@@ -110,7 +110,7 @@ export default function ComecarFeira({ user, products, selectedFairPlace, accept
         </section>
       )}
 
-      <form onSubmit={submit}>
+      <form className="start-fair-form" onSubmit={submit}>
         <section className="list">
           {groupedItems.map((group) => (
             <div className="category-group" key={group.name}>
