@@ -28,7 +28,14 @@ supabase/migration-v3-6-16-estabilidade-feira.sql
 Suba os arquivos de dentro desta pasta na raiz do GitHub. Não suba o ZIP fechado nem a pasta inteira.
 
 
-## V3.6.17
+## V3.6.18
 
 - Corrige o botão de iniciar feira cobrindo o último produto.
 - Adiciona espaço inferior na lista de produtos para permitir preencher o último item sem o botão ficar por cima.
+
+
+## V3.6.18
+
+- Adicionada alteração de senha em Dados cadastrais.
+- Mantida a base estável da V3.6.17, sem alterar a lógica de início e encerramento de feira.
+- Não exige nova migration no Supabase.
